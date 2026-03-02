@@ -126,6 +126,26 @@ async def get_onboarding_status(current_user: dict = Depends(get_current_user)):
 Fetches user's Canvas courses and returns: courses_synced (count) and courses list.
 Each course has: id, name, course_code, enrollments (role + enrollment_state).
 Note: frontend should only show courses where role is "TeacherEnrollment" on the dashboard, since "StudentEnrollment" users can't create or publish quizzes.
+
+Example return:
+{
+  "courses_synced": 13,
+  "courses":
+  [
+    {
+      "id": 555100,
+      "name": "CAI6108 - ML Engineering",
+      "course_code": "CAI6108",
+      "enrollments":
+      [
+        {
+          "role": "StudentEnrollment",
+          "enrollment_state": "active"
+        }
+      ]
+    }
+]
+}
 """
 @app.post("/api/sync-courses")
 async def sync_courses(current_user: dict = Depends(get_current_user)):
@@ -151,6 +171,24 @@ async def sync_courses(current_user: dict = Depends(get_current_user)):
 
 """
 Retrieves all quizzes for a given course from Canvas.
+This function should be called every time an instructor tries to make a new quiz. If a quiz's metadata is not in MongoDB, a new Mongo document will be made for it at this point.
+Example return:
+{
+  "quiz_count": 1,
+  "quizzes":
+  [
+    {
+      "id": 1582529,
+      "title": "API TEST Mock Quiz",
+      "description": "Practice quiz created via the Canvas API (safe to ignore).",
+      "html_url": "https://ufl.instructure.com/courses/389226/quizzes/1582529",
+      "question_count": 0,
+      "points_possible": 0,
+      "due_at": null,
+      "published": false
+    }
+  ]
+}
 """
 @app.get("/api/courses/{course_id}/quizzes")
 async def retrieve_quizzes(course_id: int, current_user: dict = Depends(get_current_user)):
@@ -172,6 +210,26 @@ async def retrieve_quizzes(course_id: int, current_user: dict = Depends(get_curr
 
 """
 Retrieves all files for a given course from Canvas.
+Each file has: id, display_name, url (direct download), updated_at, size (bytes), mime_class, content-type.
+Example return:
+{
+  "file_count": 1,
+  "files": [
+    {
+      "id": 63265314,
+      "folder_id": 6794316,
+      "display_name": "0_Introduction_and_CourseOverview.pdf",
+      "filename": "0_Introduction_and_CourseOverview.pdf",
+      "content-type": "application/pdf",
+      "url": "https://ufl.instructure.com/files/63265314/download?download_frd=1&verifier=th6QWGRXtjNiourZyexyOM2FX2n8lDFRmqNXYCy9",
+      "size": 1887556,
+      "created_at": "2021-01-12T22:15:59Z",
+      "updated_at": "2021-10-20T16:41:21Z",
+      "modified_at": "2021-01-12T22:15:59Z",
+      "mime_class": "pdf"
+    }
+  ]
+}
 """
 @app.get("/api/courses/{course_id}/files")
 async def retrieve_files(course_id: int, current_user: dict = Depends(get_current_user)):
@@ -194,6 +252,24 @@ async def retrieve_files(course_id: int, current_user: dict = Depends(get_curren
 
 """
 Retrieves all questions for a given quiz from Canvas.
+Each question has: id, question_name, question_text (HTML), question_type, points_possible, answers (with weight indicating correctness: 100 = correct, 0 = incorrect).
+Example return:
+{
+  "question_count": 1,
+  "questions": [
+    {
+      "id": 23919174,
+      "question_name": "Question",
+      "question_text": "<p>What is the computational complexity?</p>",
+      "question_type": "multiple_choice_question",
+      "points_possible": 1.0,
+      "answers": [
+        {"id": 8940, "text": "O(1)", "weight": 0},
+        {"id": 5589, "text": "O(n^2)", "weight": 100}
+      ]
+    }
+  ]
+}
 """
 @app.get("/api/courses/{course_id}/quizzes/{quiz_id}/questions")
 async def retrieve_quiz_questions(course_id: int, quiz_id: int, current_user: dict = Depends(get_current_user)):
