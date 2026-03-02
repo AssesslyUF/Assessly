@@ -5,10 +5,17 @@ DATABASE SETUP - MongoDB
 - Users collection stores:
     - _id: auto-generated MongoDB ObjectId
     - clerk_id: the ID from Clerk (links to their auth system)
+    - university_id: university identifier (e.g., "ufl")
+    - canvas_user_id: user's Canvas ID
+    - first_name: user's first name from Clerk
+    - last_name: user's last name from Clerk
+    - email: user's email from Clerk
+    - canvas_token_encrypted: user's Canvas API token
+    - navigator_token_encrypted: user's Navigator AI token
     - created_at: when user first logged in
-    - canvas_token: user's Canvas API token (optional)
-    - courses: list of synced Canvas courses (optional)
+    - updated_at: when user was last updated
 - get_db(): returns the database instance
+- user_has_tokens(): checks if user completed onboarding
 """
 
 from pymongo import MongoClient
@@ -48,27 +55,33 @@ def get_db():
 
 
 def get_or_create_user(clerk_id: str, user_data: dict = None) -> dict:
+    """Find user by clerk_id, or create if doesn't exist"""
     user = users_collection.find_one({"clerk_id": clerk_id})
     
     if not user:
         user = {
             "clerk_id": clerk_id,
-            "email": user_data.get("email") if user_data else None,
+            "university_id": None,
+            "canvas_user_id": None,
             "first_name": user_data.get("first_name") if user_data else None,
             "last_name": user_data.get("last_name") if user_data else None,
+            "email": user_data.get("email") if user_data else None,
+            "canvas_token_encrypted": None,
+            "navigator_token_encrypted": None,
             "created_at": datetime.utcnow(),
-            "canvas_token": None,
-            "courses": []
+            "updated_at": datetime.utcnow()
         }
         result = users_collection.insert_one(user)
         user["_id"] = result.inserted_id
     elif user_data:
+        # Update existing user with latest info from Clerk
         users_collection.update_one(
             {"clerk_id": clerk_id},
             {"$set": {
                 "email": user_data.get("email"),
                 "first_name": user_data.get("first_name"),
-                "last_name": user_data.get("last_name")
+                "last_name": user_data.get("last_name"),
+                "updated_at": datetime.utcnow()
             }}
         )
         user = users_collection.find_one({"clerk_id": clerk_id})
@@ -77,7 +90,17 @@ def get_or_create_user(clerk_id: str, user_data: dict = None) -> dict:
 
 
 def update_user(clerk_id: str, update_data: dict):
+    """Update user document"""
+    update_data["updated_at"] = datetime.utcnow()
     users_collection.update_one(
         {"clerk_id": clerk_id},
         {"$set": update_data}
+    )
+
+
+def user_has_tokens(user: dict) -> bool:
+    """Check if user has both required tokens (completed onboarding)"""
+    return (
+        user.get("canvas_token_encrypted") is not None and
+        user.get("navigator_token_encrypted") is not None
     )
