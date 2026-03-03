@@ -10,8 +10,8 @@ DATABASE SETUP - MongoDB
     - first_name: user's first name from Clerk
     - last_name: user's last name from Clerk
     - email: user's email from Clerk
-    - canvas_token_encrypted: user's Canvas API token
-    - navigator_token_encrypted: user's Navigator AI token
+    - canvas_token: user's Canvas API token
+    - navigator_token: user's Navigator AI token
     - created_at: when user first logged in
     - updated_at: when user was last updated
 - get_db(): returns the database instance
@@ -66,8 +66,8 @@ def get_or_create_user(clerk_id: str, user_data: dict = None) -> dict:
             "first_name": user_data.get("first_name") if user_data else None,
             "last_name": user_data.get("last_name") if user_data else None,
             "email": user_data.get("email") if user_data else None,
-            "canvas_token_encrypted": None,
-            "navigator_token_encrypted": None,
+            "canvas_token": None,
+            "navigator_token": None,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -101,6 +101,6 @@ def update_user(clerk_id: str, update_data: dict):
 def user_has_tokens(user: dict) -> bool:
     """Check if user has both required tokens (completed onboarding)"""
     return (
-        user.get("canvas_token_encrypted") is not None and
-        user.get("navigator_token_encrypted") is not None
+        user.get("canvas_token") is not None and
+        user.get("navigator_token") is not None
     )
