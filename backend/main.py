@@ -72,8 +72,8 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "email": current_user.get("email"),
         "first_name": current_user.get("first_name"),
         "last_name": current_user.get("last_name"),
-        "has_canvas_token": current_user.get("canvas_token_encrypted") is not None,
-        "has_navigator_token": current_user.get("navigator_token_encrypted") is not None,
+        "has_canvas_token": current_user.get("canvas_token") is not None,
+        "has_navigator_token": current_user.get("navigator_token") is not None,
         "onboarding_complete": user_has_tokens(current_user)
     }
 
@@ -102,8 +102,8 @@ async def save_tokens(
     
     # Save tokens
     update_user(current_user["clerk_id"], {
-        "canvas_token_encrypted": tokens.canvas_token,
-        "navigator_token_encrypted": tokens.navigator_token
+        "canvas_token": tokens.canvas_token,
+        "navigator_token": tokens.navigator_token
     })
     
     return {
@@ -116,8 +116,8 @@ async def save_tokens(
 async def get_onboarding_status(current_user: dict = Depends(get_current_user)):
     """Check if user has completed onboarding (has both tokens)"""
     return {
-        "has_canvas_token": current_user.get("canvas_token_encrypted") is not None,
-        "has_navigator_token": current_user.get("navigator_token_encrypted") is not None,
+        "has_canvas_token": current_user.get("canvas_token") is not None,
+        "has_navigator_token": current_user.get("navigator_token") is not None,
         "onboarding_complete": user_has_tokens(current_user)
     }
 
@@ -149,10 +149,9 @@ Example return:
 """
 @app.post("/api/sync-courses")
 async def sync_courses(current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token_encrypted") or os.getenv("CANVAS_TOKEN")
+    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
     if not canvas_token:
-        raise HTTPException(status_code=400, detail="No Canvas token found. Please complete onboarding.")
-
+         raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
     canvas = CanvasContentRetriever(
         canvas_url="https://ufl.instructure.com",
         access_token=canvas_token
@@ -192,9 +191,9 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/quizzes")
 async def retrieve_quizzes(course_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token_encrypted") or os.getenv("CANVAS_TOKEN")
+    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
     if not canvas_token:
-        raise HTTPException(status_code=400, detail="No Canvas token found. Please complete onboarding.")
+          raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
     canvas = CanvasContentRetriever(
         canvas_url="https://ufl.instructure.com",
@@ -233,9 +232,9 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/files")
 async def retrieve_files(course_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token_encrypted") or os.getenv("CANVAS_TOKEN")
+    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
     if not canvas_token:
-        raise HTTPException(status_code=400, detail="No Canvas token found. Please complete onboarding.")
+         raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
     canvas = CanvasContentRetriever(
         canvas_url="https://ufl.instructure.com",
@@ -273,9 +272,9 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/quizzes/{quiz_id}/questions")
 async def retrieve_quiz_questions(course_id: int, quiz_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token_encrypted") or os.getenv("CANVAS_TOKEN")
+    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
     if not canvas_token:
-        raise HTTPException(status_code=400, detail="No Canvas token found. Please complete onboarding.")
+         raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
     canvas = CanvasContentRetriever(
         canvas_url="https://ufl.instructure.com",
