@@ -7,7 +7,7 @@ MAIN API SERVER - MongoDB Version
 - Routes
     / = basic check if server is running
     /api/me = returns logged-in user info (protected - needs login)
-    /api/tokens = saves Canvas and Navigator tokens (protected)
+    /api/tokens = saves Canvas and Gemini tokens (protected)
     /api/onboarding-status = checks if user has completed onboarding (protected)
     /api/sync-courses = fetches user's Canvas courses and stores them (protected)
 """
@@ -16,6 +16,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
 import os
+import httpx
 from dotenv import load_dotenv
 from database import get_or_create_user, update_user, users_collection, init_db, user_has_tokens
 from clerk_auth import verify_clerk_token
@@ -39,8 +40,27 @@ class TokensRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     
     canvas_token: str = Field(alias="canvasToken")
-    navigator_token: str = Field(alias="navigatorToken")
+    gemini_token: str = Field(alias="geminiToken")
+
+
+async def verify_gemini_token(api_key: str) -> bool:
+    """
+    Verify Gemini API key by making a simple API call.
+    Returns True if valid, raises exception if invalid.
+    """
+    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"
     
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        
+        if response.status_code == 200:
+            return True
+        elif response.status_code == 400:
+            raise ValueError("Invalid Gemini API key format")
+        elif response.status_code == 403:
+            raise ValueError("Gemini API key is invalid or has been revoked")
+        else:
+            raise ValueError(f"Failed to verify Gemini API key: {response.status_code}")
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -76,7 +96,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "first_name": current_user.get("first_name"),
         "last_name": current_user.get("last_name"),
         "has_canvas_token": current_user.get("canvas_token") is not None,
-        "has_navigator_token": current_user.get("navigator_token") is not None,
+        "has_gemini_token": current_user.get("gemini_token") is not None,
         "onboarding_complete": user_has_tokens(current_user)
     }
 
@@ -87,8 +107,8 @@ async def save_tokens(
     current_user: dict = Depends(get_current_user)
 ):
     """
-    Save Canvas and Navigator tokens for user.
-    Validates Canvas token by attempting to fetch courses.
+    Save Canvas and Gemini tokens for user.
+    Validates both tokens before saving.
     """
     
     # Verify Canvas token works by fetching courses
@@ -101,13 +121,17 @@ async def save_tokens(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid Canvas token: {str(e)}")
     
-    # TODO: Verify Navigator token when we have Navigator API
+    # Verify Gemini API key
+    try:
+        await verify_gemini_token(tokens.gemini_token)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     # Save tokens
     try:
         update_user(current_user["clerk_id"], {
             "canvas_token": tokens.canvas_token,
-            "navigator_token": tokens.navigator_token
+            "gemini_token": tokens.gemini_token
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save tokens: {str(e)}")
@@ -123,7 +147,7 @@ async def get_onboarding_status(current_user: dict = Depends(get_current_user)):
     """Check if user has completed onboarding (has both tokens)"""
     return {
         "has_canvas_token": current_user.get("canvas_token") is not None,
-        "has_navigator_token": current_user.get("navigator_token") is not None,
+        "has_gemini_token": current_user.get("gemini_token") is not None,
         "onboarding_complete": user_has_tokens(current_user)
     }
 

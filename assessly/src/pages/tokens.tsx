@@ -6,13 +6,13 @@ import { useNavigate } from 'react-router-dom';
 
 function Tokens({ onTokensSaved }: { onTokensSaved: () => void }) {
   const [canvasToken, setCanvasToken] = useState('');
-  const [navigatorToken, setNavigatorToken] = useState('');
+  const [geminiToken, setGeminiToken] = useState('');
   const [loading, setLoading] = useState(false);
   const { getToken } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
-    if (!canvasToken || !navigatorToken) {
+    if (!canvasToken || !geminiToken) {
       alert('Please fill in both tokens');
       return;
     }
@@ -27,16 +27,17 @@ function Tokens({ onTokensSaved }: { onTokensSaved: () => void }) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          canvas_token: canvasToken,
-          navigator_token: navigatorToken
+          canvasToken: canvasToken,
+          geminiToken: geminiToken
         })
       });
 
       if (response.ok) {
-        onTokensSaved(); // Update the token status in App.tsx
-        navigate('/dashboard'); // Directly go to dashboard
+        onTokensSaved();
+        navigate('/dashboard');
       } else {
-        alert('Failed to save tokens');
+        const data = await response.json();
+        alert(data.detail || 'Failed to save tokens');
       }
     } catch (error) {
       console.error('Error saving tokens:', error);
@@ -54,7 +55,7 @@ function Tokens({ onTokensSaved }: { onTokensSaved: () => void }) {
         </div>
         <div className="input">
             <input type="text" placeholder="Canvas Token" className="input-field" value={canvasToken} onChange={(e) => setCanvasToken(e.target.value)}/>
-            <input type="text" placeholder="Navigator Token" className="input-field" value={navigatorToken} onChange={(e) => setNavigatorToken(e.target.value)}/>
+            <input type="text" placeholder="Gemini API Key" className="input-field" value={geminiToken} onChange={(e) => setGeminiToken(e.target.value)}/>
             <button className="login-button" onClick={handleSubmit} disabled={loading}>
               {loading ? 'Saving...' : 'Continue'}
             </button>
