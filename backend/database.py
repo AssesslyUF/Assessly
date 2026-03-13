@@ -11,7 +11,7 @@ DATABASE SETUP - MongoDB
     - last_name: user's last name from Clerk
     - email: user's email from Clerk
     - canvas_token: user's Canvas API token
-    - navigator_token: user's Navigator AI token
+    - gemini_token: user's Gemini API key
     - created_at: when user first logged in
     - updated_at: when user was last updated
 - get_db(): returns the database instance
@@ -67,7 +67,7 @@ def get_or_create_user(clerk_id: str, user_data: dict = None) -> dict:
             "last_name": user_data.get("last_name") if user_data else None,
             "email": user_data.get("email") if user_data else None,
             "canvas_token": None,
-            "navigator_token": None,
+            "gemini_token": None,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -102,5 +102,5 @@ def user_has_tokens(user: dict) -> bool:
     """Check if user has both required tokens (completed onboarding)"""
     return (
         user.get("canvas_token") is not None and
-        user.get("navigator_token") is not None
+        user.get("gemini_token") is not None
     )
