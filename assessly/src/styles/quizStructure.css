@@ -605,6 +605,86 @@
     font-size: 1rem;
 }
 
+.quiz-review-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.48);
+}
+
+.quiz-review-delete-modal {
+    width: min(100%, 760px);
+    background: #f7f7f2;
+    border-radius: 18px;
+    padding: 2.5rem 2.6rem 2.4rem;
+    box-shadow: 0 26px 70px rgba(0, 0, 0, 0.28);
+}
+
+.quiz-review-delete-title {
+    margin: 0;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: clamp(1.65rem, 2vw, 2.15rem);
+    font-weight: 700;
+    color: #111111;
+}
+
+.quiz-review-delete-text {
+    margin: 0.75rem 0 0;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: clamp(1rem, 1.15vw, 1.25rem);
+    line-height: 1.35;
+    color: #171717;
+}
+
+.quiz-review-delete-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.quiz-review-delete-cancel,
+.quiz-review-delete-confirm {
+    min-width: 122px;
+    min-height: 48px;
+    border-radius: 999px;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.quiz-review-delete-cancel {
+    border: 1.5px solid #171717;
+    background: transparent;
+    color: #171717;
+}
+
+.quiz-review-delete-confirm {
+    border: none;
+    background: #050505;
+    color: #ffffff;
+}
+
+.quiz-review-delete-cancel:hover,
+.quiz-review-delete-confirm:hover {
+    transform: translateY(-1px);
+}
+
+.quiz-review-delete-cancel:focus,
+.quiz-review-delete-cancel:focus-visible,
+.quiz-review-delete-confirm:focus,
+.quiz-review-delete-confirm:focus-visible {
+    outline: 3px solid rgba(58, 120, 184, 0.28);
+    outline-offset: 2px;
+}
+
 @media (max-width: 1100px) {
     .quiz-review-content {
         flex-direction: column;
@@ -690,6 +770,21 @@
 
     .quiz-review-option-text {
         font-size: 1rem;
+    }
+
+    .quiz-review-delete-modal {
+        padding: 2rem 1.4rem 1.5rem;
+        border-radius: 16px;
+    }
+
+    .quiz-review-delete-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .quiz-review-delete-cancel,
+    .quiz-review-delete-confirm {
+        width: 100%;
     }
 }
 
