@@ -209,7 +209,8 @@
     flex: 1;
     min-height: 0;
     width: 100%;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .quizStepPromptPanel {
