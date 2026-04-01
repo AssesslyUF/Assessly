@@ -50,7 +50,7 @@ Rules:
         ValueError: If files list is empty or a file entry is missing a URL
         RuntimeError: If any download, Gemini upload, or generation step fails
     """
-def generate_quiz_from_files(files: list, canvas_token: str, gemini_token: str = None) -> dict:
+def generate_quiz_from_files(files: list, canvas_token: str, gemini_token: str = None, previous_questions: list = None, question_count: int = 5) -> dict:
     if not files:
         raise ValueError("At least one file is required to generate a quiz.")
 
@@ -104,7 +104,11 @@ def generate_quiz_from_files(files: list, canvas_token: str, gemini_token: str =
 
         # Generate quiz: pass all uploaded files + the structured prompt
         print(f"Generating quiz from {len(uploaded_files)} file(s)...")
-        contents = uploaded_files + [QUIZ_PROMPT]
+        prompt = QUIZ_PROMPT.replace("exactly 5", f"exactly {question_count}").replace("Exactly 5", f"Exactly {question_count}")
+        if previous_questions:
+            prev_json = json.dumps(previous_questions, indent=2)
+            prompt += f"\n\nThe following questions already exist from previous quizzes. Do not duplicate them — use them as context for topic coverage and style:\n{prev_json}"
+        contents = uploaded_files + [prompt]
 
         try:
             gemini_response = client.models.generate_content(

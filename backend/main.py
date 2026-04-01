@@ -71,6 +71,9 @@ class FileInfo(BaseModel):
 
 class GenerateQuizRequest(BaseModel):
     files: list[FileInfo]
+    course_id: int | None = None
+    quiz_ids: list[int] = []
+    question_count: int = 5
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -356,11 +359,24 @@ async def generate_quiz(body: GenerateQuizRequest, current_user: dict = Depends(
 
     files = [f.model_dump() for f in body.files]
 
+    # Fetch questions from any previously selected quizzes
+    previous_questions = []
+    if body.course_id and body.quiz_ids:
+        canvas = CanvasContentRetriever(
+            canvas_url="https://ufl.instructure.com",
+            access_token=canvas_token
+        )
+        for quiz_id in body.quiz_ids:
+            try:
+                questions = canvas.get_quiz_questions(body.course_id, quiz_id)
+                previous_questions.extend(questions)
+            except Exception as e:
+                print(f"Warning: could not fetch questions for quiz {quiz_id}: {e}")
+
     try:
-        quiz = generate_quiz_from_files(files, canvas_token, gemini_token)
+        quiz = generate_quiz_from_files(files, canvas_token, gemini_token, previous_questions, body.question_count)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-        print(gemini_token)
     except RuntimeError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
