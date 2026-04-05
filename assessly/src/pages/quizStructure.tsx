@@ -1,15 +1,18 @@
 import questionMark from '../assets/Question_Mark.png';
 import backArrow from '../assets/Caret_Left.png';
+import star from '../assets/star.png';
 
 import '../styles/quizStructure.css';
 
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../config/api';
 
 function QuizStructure() {
+    const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
     // Course selection
     const [courses, setCourses] = useState<any[]>([]);
+    //Selected course ID (from dashboard)
     const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
     const [isLoadingCourses, setIsLoadingCourses] = useState(false);
 
@@ -45,13 +48,13 @@ function QuizStructure() {
     const [additionalNotes, setAdditionalNotes] = useState("");
 
     const [userAssignmentGroupIds] = useState([{id: 1, name: "Quizzes"}, {id: 2, name: "Ungraded"}]);
+    const location = useLocation();
 
     const structureQuestions = [
-        {id: 1, title: "Which course would you like to create a quiz for?"},
-        {id: 2, title: "Which course quizzes would you like the quiz to be based on?"},
-        {id: 3, title: "Which content would like to be included in the quiz?"},
-        {id: 4, title: "Canvas Quiz Structure"},
-        {id: 5, title: "AI Prompting"}
+        {id: 1, title: "Which course quizzes would you like the quiz to be based on?"},
+        {id: 2, title: "Which content would like to be included in the quiz?"},
+        {id: 3, title: "Canvas Quiz Structure"},
+        {id: 4, title: "AI Prompting"}
     ]
     const [index, setIndex] = useState(0);
     const navigate = useNavigate();
@@ -79,6 +82,14 @@ function QuizStructure() {
         }
         loadCourses();
     }, []);
+
+    useEffect(() => {
+        const state = location.state as { selectedCourseId?: number } | null;
+        if (state?.selectedCourseId != null) {
+            setSelectedCourseId(state.selectedCourseId);
+            console.log("course ID:" + selectedCourseId);
+        }
+    }, [location.state]);
 
     // Load files and quizzes when course is selected
     useEffect(() => {
@@ -199,44 +210,44 @@ function QuizStructure() {
 
     function getQuizQuestionContent() {
         // Step 0: Choose Course
-        if (index === 0) {
-            return (
-                <div className="quizStepPanel">
-                    {isLoadingCourses && 
-                    <div className="loading-status" role="status" aria-live="polite">
-                    <span className="loading-dots" aria-hidden="true">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                    </div>
-                    }
+        // if (index === 0) {
+        //     return (
+        //         <div className="quizStepPanel">
+        //             {isLoadingCourses && 
+        //             <div className="loading-status" role="status" aria-live="polite">
+        //             <span className="loading-dots" aria-hidden="true">
+        //                 <span></span>
+        //                 <span></span>
+        //                 <span></span>
+        //             </span>
+        //             </div>
+        //             }
                     
-                    {!isLoadingCourses && courses.length === 0 && (
-                        <p>No courses found where you are a Teacher or TA</p>
-                    )}
+        //             {!isLoadingCourses && courses.length === 0 && (
+        //                 <p>No courses found where you are a Teacher or TA</p>
+        //             )}
 
-                    {!isLoadingCourses && courses.length > 0 && (
-                        <div className="quizStepChecklist">
-                            {courses.map((course) => (
-                                <label key={course.id} className="quizFileOption">
-                                    <input
-                                        type="radio"
-                                        name="courseSelection"
-                                        checked={selectedCourseId === course.id}
-                                        onChange={() => setSelectedCourseId(course.id)}
-                                        className="quizCheckbox"
-                                    />
-                                    {course.name}
-                                </label>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-        }
+        //             {!isLoadingCourses && courses.length > 0 && (
+        //                 <div className="quizStepChecklist">
+        //                     {courses.map((course) => (
+        //                         <label key={course.id} className="quizFileOption">
+        //                             <input
+        //                                 type="radio"
+        //                                 name="courseSelection"
+        //                                 checked={selectedCourseId === course.id}
+        //                                 onChange={() => setSelectedCourseId(course.id)}
+        //                                 className="quizCheckbox"
+        //                             />
+        //                             {course.name}
+        //                         </label>
+        //                     ))}
+        //                 </div>
+        //             )}
+        //         </div>
+        //     );
+        // }
         // Step 1: Choose Canvas Quizzes 
-        else if (index === 1) {
+        if (index === 0) {
             const filteredQuizzes = prevQuizzes.filter((quiz) => {
                 const quizTitle = (quiz.title || "").toLowerCase();
                 return quizTitle.includes(quizSearchQuery.trim().toLowerCase());
@@ -280,7 +291,7 @@ function QuizStructure() {
             );
         }
         // Step 2: Choose Canvas materials 
-        else if (index === 2) {
+        else if (index === 1) {
             const filteredFiles = files.filter((file) => {
                 const fileName = (file.display_name || "").toLowerCase();
                 return fileName.includes(materialSearchQuery.trim().toLowerCase());
@@ -357,7 +368,7 @@ function QuizStructure() {
             Enable display items in results view:  quiz[quiz_settings][result_view_settings][display_items]          (boolean)   
             */
         // Step 3: Quiz Qualities 
-        else if (index === 3) {
+        else if (index === 2) {
             return (
                 <div className="quizQuestionContainer quizStepPanel quizStepMaterialsList"  style={{overflowY:"auto"}}>
                     {/* Quiz Title */}
@@ -545,14 +556,28 @@ function QuizStructure() {
                     onClick={() => navigate('/dashboard')}
                     style={{ cursor: 'pointer' }}
                 />
-                {/* <div className="image-container-white">
-                    <img src={sideImg} className="quiz-img" alt="Quiz Structure Image"/>
-                </div> */}
             </div>
         
             <div className="questions-container">
-                {/* <img src={greenBackground} className="green-background" alt="Green Background"/> */}
-                <div className="questions">
+                <div className="questions" style={{ padding: 0, overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', width: '100%', height: '100%', minHeight: 0 }}>
+
+                    {/* Question number sidebar */}
+                    <div className="quiz-review-progress">
+                        {structureQuestions.map((_, question) => (
+                        <button
+                            key={question}
+                            type="button"
+                            className={`quiz-review-progress-item ${question === index ? 'active' : ''}`}
+                            onClick={() => setIndex(question)}
+                            aria-label={`Go to question ${question + 1}`}
+                        >
+                            {question + 1}
+                        </button>
+                        ))}
+                    </div>
+                {/* Main section */}
+                <div className='questionMain'>
                     <p className="question-num">{structureQuestions[index].id}/{structureQuestions.length}</p>
                     <h3 className="question-text">{structureQuestions[index].title}</h3>
                     {getQuizQuestionContent()}
@@ -579,8 +604,26 @@ function QuizStructure() {
                         </div>
                     }
                 </div>
+                </div>
+                </div>
             </div>
         </div>
+
+        {isGenerating && (
+            <div className="quiz-generating-overlay" role="status" aria-live="polite" aria-label="Quiz is generating">
+                <div className="quiz-generating-stack">
+                    <div className="quiz-generating-row">
+                        <div aria-hidden="true">
+                            <img src={star}></img>
+                        </div>
+                        <p className="quiz-generating-text">
+                            <span>Quiz</span>
+                            <span>Generating</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
     );
 }

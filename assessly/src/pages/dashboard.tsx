@@ -16,6 +16,13 @@ function Dashboard() {
   const [coursesWithQuizzes, setCoursesWithQuizzes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  // TODO: retrieve recently drafted quizzes 
+  //const [cachedQuizzes, setCachedQuizzes] = useState<any[]>([]);
+  // Dummy data 
+  const cachedQuizzes = [
+    {"id": 1000, "title": "Temp Quiz 1", question_count: 10, points_possible: 10},
+    {"id": 2000, "title": "Temp Quiz 2", question_count: 15, points_possible: 15}
+  ];
   const userInitial = (
     user?.firstName?.[0] ||
     user?.lastName?.[0] ||
@@ -128,7 +135,7 @@ function Dashboard() {
               <button 
               type="button" 
               className="btn-new-quiz"
-              onClick={() => navigate('/quiz-structure')}
+              onClick={() => navigate('/quiz-structure', { state: { selectedCourseId: selectedCourse.id } })}
             >
               New Quiz
             </button>
@@ -157,6 +164,19 @@ function Dashboard() {
           </section>
         ) : (
           <section className="section">
+            {/* Cached quizzes section */}
+            <h2 className="section-heading">Continue working</h2>
+            <div className="cards">
+                {cachedQuizzes.map((quiz: any) => (
+                  <article className="card" key={quiz.id}>
+                    <img src={cardImg} alt={quiz.title} className="card-image" />
+                    <h3 className="card-title">{quiz.title}</h3>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#666' }}>
+                      {quiz.question_count} {quiz.question_count === 1 ? 'question' : 'questions'} • {quiz.points_possible} points
+                    </p>
+                  </article>
+                ))}
+            </div>
             <h2 className="section-heading">Dashboard</h2>
             <div className="cards">
               {loading ? (
