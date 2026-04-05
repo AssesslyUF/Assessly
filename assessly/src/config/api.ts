@@ -79,7 +79,17 @@ getQuiz: async (quizId: string) => {
     return response.json();
   },
 
-publishQuiz: async (quizId: string) => {
+saveQuizToCanvas: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/save-to-canvas`, { method: 'POST', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to save quiz to Canvas');
+    }
+    return response.json();
+  },
+
+  publishQuiz: async (quizId: string) => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/publish`, {
       method: 'POST',

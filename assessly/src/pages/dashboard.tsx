@@ -130,29 +130,35 @@ function Dashboard() {
                 Unable to sync with Canvas at the moment.
               </div>
             )}
-            <h2 className="section-heading" style={{fontWeight: "400"}}>Published</h2>
+            <h2 className="section-heading" style={{fontWeight: "400"}}>Synced with Canvas</h2>
             <div className="cards">
-              {selectedCourse.quizzes?.filter((q: any) => q.status === 'published').length > 0 ? (
-                selectedCourse.quizzes.filter((q: any) => q.status === 'published').map((quiz: any) => (
+              {selectedCourse.quizzes?.filter((q: any) => q.status === 'published_on_canvas' || q.status === 'saved_to_canvas').length > 0 ? (
+                selectedCourse.quizzes.filter((q: any) => q.status === 'published_on_canvas' || q.status === 'saved_to_canvas').map((quiz: any) => (
                   <article className="card" key={quiz._id} onClick={() => navigate(`/quiz-review?quiz_id=${quiz._id}`)} style={{ cursor: 'pointer' }}>
                     <img src={cardImg} alt={quiz.title} className="card-image" />
                     <h3 className="card-title">{quiz.title}</h3>
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#666' }}>
                       {quiz.question_count} {quiz.question_count === 1 ? 'Question' : 'Questions'}
                     </p>
-                    <span style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.75rem', fontWeight: 600, color: '#2e7d5e', background: 'rgba(46,125,94,0.1)', border: '1px solid rgba(46,125,94,0.3)', borderRadius: '4px', padding: '2px 8px' }}>
-                      Published
-                    </span>
+                    {quiz.status === 'published_on_canvas' ? (
+                      <span style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.75rem', fontWeight: 600, color: '#2e7d5e', background: 'rgba(46,125,94,0.1)', border: '1px solid rgba(46,125,94,0.3)', borderRadius: '4px', padding: '2px 8px' }}>
+                        Published
+                      </span>
+                    ) : (
+                      <span style={{ display: 'inline-block', marginTop: '0.5rem', fontSize: '0.75rem', fontWeight: 600, color: '#b07d00', background: 'rgba(176,125,0,0.1)', border: '1px solid rgba(176,125,0,0.3)', borderRadius: '4px', padding: '2px 8px' }}>
+                        Saved to Canvas
+                      </span>
+                    )}
                   </article>
                 ))
               ) : (
-                <p>No published quizzes</p>
+                <p>No quizzes synced with Canvas</p>
               )}
             </div>
             <h2 className="section-heading" style={{fontWeight: "400"}}>Drafts</h2>
             <div className="cards">
-              {selectedCourse.quizzes?.filter((q: any) => q.status !== 'published').length > 0 ? (
-                selectedCourse.quizzes.filter((q: any) => q.status !== 'published').map((quiz: any) => (
+              {selectedCourse.quizzes?.filter((q: any) => q.status !== 'published_on_canvas' && q.status !== 'saved_to_canvas').length > 0 ? (
+                selectedCourse.quizzes.filter((q: any) => q.status !== 'published_on_canvas' && q.status !== 'saved_to_canvas').map((quiz: any) => (
                   <article className="card" key={quiz._id} onClick={() => navigate(`/quiz-review?quiz_id=${quiz._id}`)} style={{ cursor: 'pointer' }}>
                     <img src={cardImg} alt={quiz.title} className="card-image" />
                     <h3 className="card-title">{quiz.title}</h3>

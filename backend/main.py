@@ -456,13 +456,14 @@ async def get_assessly_quizzes(course_id: int, current_user: dict = Depends(get_
 
     sync_warning = False
     if canvas_token:
-        published_docs = [d for d in docs if d.get("status") == "published" and d.get("new_quiz_id")]
+        published_docs = [d for d in docs if d.get("status") in ("published_on_canvas", "saved_to_canvas") and d.get("new_quiz_id")]
         if published_docs:
             try:
                 canvas_quizzes = get_all_new_quizzes_for_course(course_id, canvas_token)
                 for doc in published_docs:
                     quiz_id_str = str(doc["new_quiz_id"])
                     if quiz_id_str not in canvas_quizzes:
+                        # Quiz was deleted from Canvas — revert to draft
                         course_quizzes_collection.update_one(
                             {"_id": doc["_id"]},
                             {"$set": {
@@ -475,13 +476,27 @@ async def get_assessly_quizzes(course_id: int, current_user: dict = Depends(get_
                         doc["status"] = "generated_pending_review"
                         doc["new_quiz_id"] = None
                     else:
-                        canvas_title = canvas_quizzes[quiz_id_str]
+                        canvas_info = canvas_quizzes[quiz_id_str]
+                        updates = {}
+
+                        # Sync title if changed on Canvas
+                        canvas_title = canvas_info["title"]
                         if canvas_title and canvas_title != doc.get("title"):
-                            course_quizzes_collection.update_one(
-                                {"_id": doc["_id"]},
-                                {"$set": {"title": canvas_title, "updated_at": datetime.now(timezone.utc)}}
-                            )
+                            updates["title"] = canvas_title
                             doc["title"] = canvas_title
+
+                        # Sync published state if changed on Canvas
+                        canvas_published = canvas_info["published"]
+                        if canvas_published and doc.get("status") == "saved_to_canvas":
+                            updates["status"] = "published_on_canvas"
+                            doc["status"] = "published_on_canvas"
+                        elif not canvas_published and doc.get("status") == "published_on_canvas":
+                            updates["status"] = "saved_to_canvas"
+                            doc["status"] = "saved_to_canvas"
+
+                        if updates:
+                            updates["updated_at"] = datetime.now(timezone.utc)
+                            course_quizzes_collection.update_one({"_id": doc["_id"]}, {"$set": updates})
             except RuntimeError:
                 sync_warning = True
 
@@ -508,51 +523,78 @@ async def get_quiz(quiz_id: str, current_user: dict = Depends(get_current_user))
     return quiz_doc
 
 
-@app.post("/api/quizzes/{quiz_id}/publish")
-async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_user)):
+@app.post("/api/quizzes/{quiz_id}/save-to-canvas")
+async def save_to_canvas(quiz_id: str, current_user: dict = Depends(get_current_user)):
+    """Save quiz to Canvas as an unpublished draft. Status → saved_to_canvas."""
     canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
     if not canvas_token:
         raise HTTPException(status_code=400, detail="No Canvas token found.")
 
-    # Fetch quiz doc from MongoDB
     try:
-        quiz_doc = course_quizzes_collection.find_one({
-            "_id": ObjectId(quiz_id),
-            "clerk_id": current_user["clerk_id"]
-        })
+        quiz_doc = course_quizzes_collection.find_one({"_id": ObjectId(quiz_id), "clerk_id": current_user["clerk_id"]})
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid quiz id.")
-
     if not quiz_doc:
         raise HTTPException(status_code=404, detail="Quiz not found.")
+    if quiz_doc["status"] in ("saved_to_canvas", "published_on_canvas"):
+        raise HTTPException(status_code=400, detail="Quiz is already on Canvas.")
 
-    if quiz_doc["status"] == "published":
-        raise HTTPException(status_code=400, detail="Quiz is already published.")
-
-    # Publish to Canvas
     try:
-        publish_result = publish_quiz_to_canvas(quiz_doc, canvas_token)
+        result = publish_quiz_to_canvas(quiz_doc, canvas_token, publish=False)
     except RuntimeError as e:
         course_quizzes_collection.update_one(
             {"_id": ObjectId(quiz_id)},
-            {"$set": {
-                "status": "publish_failed",
-                "publish_metadata.last_error": str(e),
-                "updated_at": datetime.now(timezone.utc)
-            }}
+            {"$set": {"status": "publish_failed", "publish_metadata.last_error": str(e), "updated_at": datetime.now(timezone.utc)}}
         )
         raise HTTPException(status_code=502, detail=str(e))
 
-    # Write Canvas IDs back to MongoDB
     now = datetime.now(timezone.utc)
-    question_updates = {
-        f"questions.{i}.canvas_item_id": q["canvas_item_id"]
-        for i, q in enumerate(publish_result["questions"])
-    }
+    question_updates = {f"questions.{i}.canvas_item_id": q["canvas_item_id"] for i, q in enumerate(result["questions"])}
     course_quizzes_collection.update_one(
         {"_id": ObjectId(quiz_id)},
         {"$set": {
-            "status": "published",
+            "status": "saved_to_canvas",
+            "new_quiz_id": result["new_quiz_id"],
+            "assignment_id": result["assignment_id"],
+            "publish_metadata.last_error": None,
+            "updated_at": now,
+            **question_updates
+        }}
+    )
+    return {"quiz_id": quiz_id, "new_quiz_id": result["new_quiz_id"]}
+
+
+@app.post("/api/quizzes/{quiz_id}/publish")
+async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_user)):
+    """Publish quiz directly to Canvas. Status → published_on_canvas."""
+    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    if not canvas_token:
+        raise HTTPException(status_code=400, detail="No Canvas token found.")
+
+    try:
+        quiz_doc = course_quizzes_collection.find_one({"_id": ObjectId(quiz_id), "clerk_id": current_user["clerk_id"]})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid quiz id.")
+    if not quiz_doc:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+    if quiz_doc["status"] == "published_on_canvas":
+        raise HTTPException(status_code=400, detail="Quiz is already published.")
+
+    try:
+        publish_result = publish_quiz_to_canvas(quiz_doc, canvas_token, publish=True)
+    except RuntimeError as e:
+        course_quizzes_collection.update_one(
+            {"_id": ObjectId(quiz_id)},
+            {"$set": {"status": "publish_failed", "publish_metadata.last_error": str(e), "updated_at": datetime.now(timezone.utc)}}
+        )
+        raise HTTPException(status_code=502, detail=str(e))
+
+    now = datetime.now(timezone.utc)
+    question_updates = {f"questions.{i}.canvas_item_id": q["canvas_item_id"] for i, q in enumerate(publish_result["questions"])}
+    course_quizzes_collection.update_one(
+        {"_id": ObjectId(quiz_id)},
+        {"$set": {
+            "status": "published_on_canvas",
             "new_quiz_id": publish_result["new_quiz_id"],
             "assignment_id": publish_result["assignment_id"],
             "publish_metadata.published_at": now,
@@ -561,9 +603,4 @@ async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_us
             **question_updates
         }}
     )
-
-    return {
-        "quiz_id": quiz_id,
-        "new_quiz_id": publish_result["new_quiz_id"],
-        "assignment_id": publish_result["assignment_id"]
-    }
+    return {"quiz_id": quiz_id, "new_quiz_id": publish_result["new_quiz_id"], "assignment_id": publish_result["assignment_id"]}
