@@ -148,10 +148,10 @@ def publish_quiz_to_canvas(quiz_doc: dict, canvas_token: str) -> dict:
     }
 
 
-def get_all_new_quiz_ids_for_course(course_id: int, canvas_token: str) -> set:
+def get_all_new_quizzes_for_course(course_id: int, canvas_token: str) -> dict:
     """
     Fetches all New Quizzes for a course in one call.
-    Returns a set of quiz IDs (strings).
+    Returns a dict of {quiz_id (str): title (str)}.
     """
     headers = {"Authorization": f"Bearer {canvas_token}"}
     resp = requests.get(
@@ -162,5 +162,4 @@ def get_all_new_quiz_ids_for_course(course_id: int, canvas_token: str) -> set:
     if not resp.ok:
         raise RuntimeError(f"Failed to fetch New Quizzes for course: {resp.status_code} {resp.text}")
 
-    quizzes = resp.json()
-    return {str(q.get("id")) for q in quizzes if q.get("id")}
+    return {str(q["id"]): q.get("title", "") for q in resp.json() if q.get("id")}

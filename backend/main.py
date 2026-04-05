@@ -26,7 +26,7 @@ from database import get_or_create_user, update_user, users_collection, course_q
 from clerk_auth import verify_clerk_token
 from canvas_retriever import CanvasContentRetriever
 from gemini_retriever import generate_quiz_from_files
-from canvas_publisher import publish_quiz_to_canvas, get_all_new_quiz_ids_for_course
+from canvas_publisher import publish_quiz_to_canvas, get_all_new_quizzes_for_course
 import markdown as md_lib
 
 load_dotenv()
@@ -459,9 +459,10 @@ async def get_assessly_quizzes(course_id: int, current_user: dict = Depends(get_
         published_docs = [d for d in docs if d.get("status") == "published" and d.get("new_quiz_id")]
         if published_docs:
             try:
-                canvas_quiz_ids = get_all_new_quiz_ids_for_course(course_id, canvas_token)
+                canvas_quizzes = get_all_new_quizzes_for_course(course_id, canvas_token)
                 for doc in published_docs:
-                    if str(doc["new_quiz_id"]) not in canvas_quiz_ids:
+                    quiz_id_str = str(doc["new_quiz_id"])
+                    if quiz_id_str not in canvas_quizzes:
                         course_quizzes_collection.update_one(
                             {"_id": doc["_id"]},
                             {"$set": {
@@ -473,6 +474,14 @@ async def get_assessly_quizzes(course_id: int, current_user: dict = Depends(get_
                         )
                         doc["status"] = "generated_pending_review"
                         doc["new_quiz_id"] = None
+                    else:
+                        canvas_title = canvas_quizzes[quiz_id_str]
+                        if canvas_title and canvas_title != doc.get("title"):
+                            course_quizzes_collection.update_one(
+                                {"_id": doc["_id"]},
+                                {"$set": {"title": canvas_title, "updated_at": datetime.now(timezone.utc)}}
+                            )
+                            doc["title"] = canvas_title
             except RuntimeError:
                 sync_warning = True
 
