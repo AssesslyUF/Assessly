@@ -28,6 +28,7 @@ from canvas_retriever import CanvasContentRetriever
 from gemini_retriever import generate_quiz_from_files
 from canvas_publisher import publish_quiz_to_canvas, get_all_new_quizzes_for_course
 import markdown as md_lib
+from encryption import encrypt, decrypt
 
 load_dotenv()
 
@@ -147,11 +148,11 @@ async def save_tokens(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    # Save tokens
+    # Encrypt and save tokens
     try:
         update_user(current_user["clerk_id"], {
-            "canvas_token": tokens.canvas_token,
-            "gemini_token": tokens.gemini_token
+            "canvas_token": encrypt(tokens.canvas_token),
+            "gemini_token": encrypt(tokens.gemini_token)
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save tokens: {str(e)}")
@@ -199,7 +200,8 @@ Example return:
 """
 @app.post("/api/sync-courses")
 async def sync_courses(current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
          raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
     canvas = CanvasContentRetriever(
@@ -241,7 +243,8 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/quizzes")
 async def retrieve_quizzes(course_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
           raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
@@ -282,7 +285,8 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/files")
 async def retrieve_files(course_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
          raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
@@ -322,7 +326,8 @@ Example return:
 """
 @app.get("/api/courses/{course_id}/quizzes/{quiz_id}/questions")
 async def retrieve_quiz_questions(course_id: int, quiz_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
          raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
@@ -356,14 +361,15 @@ Example request body:
 """
 @app.post("/api/generate-quiz")
 async def generate_quiz(body: GenerateQuizRequest, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
         raise HTTPException(status_code=400, detail="No Canvas token found. Please add your Canvas API token.")
 
-    gemini_token = current_user.get("gemini_token") or os.getenv("GEMINI_KEY")
+    encrypted_gemini = current_user.get("gemini_token")
+    gemini_token = decrypt(encrypted_gemini) if encrypted_gemini else os.getenv("GEMINI_KEY")
     if not gemini_token:
         raise HTTPException(status_code=400, detail="No Gemini API key found. Please add your Gemini API key.")
-
     files = [f.model_dump() for f in body.files]
 
     # Fetch questions from any previously selected quizzes
@@ -447,7 +453,8 @@ async def generate_quiz(body: GenerateQuizRequest, current_user: dict = Depends(
 
 @app.get("/api/courses/{course_id}/assessly-quizzes")
 async def get_assessly_quizzes(course_id: int, current_user: dict = Depends(get_current_user)):
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
 
     docs = list(course_quizzes_collection.find(
         {"clerk_id": current_user["clerk_id"], "course_id": course_id},
@@ -526,7 +533,8 @@ async def get_quiz(quiz_id: str, current_user: dict = Depends(get_current_user))
 @app.post("/api/quizzes/{quiz_id}/save-to-canvas")
 async def save_to_canvas(quiz_id: str, current_user: dict = Depends(get_current_user)):
     """Save quiz to Canvas as an unpublished draft. Status → saved_to_canvas."""
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
         raise HTTPException(status_code=400, detail="No Canvas token found.")
 
@@ -566,8 +574,8 @@ async def save_to_canvas(quiz_id: str, current_user: dict = Depends(get_current_
 
 @app.post("/api/quizzes/{quiz_id}/publish")
 async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_user)):
-    """Publish quiz directly to Canvas. Status → published_on_canvas."""
-    canvas_token = current_user.get("canvas_token") or os.getenv("CANVAS_TOKEN")
+    encrypted_canvas = current_user.get("canvas_token")
+    canvas_token = decrypt(encrypted_canvas) if encrypted_canvas else os.getenv("CANVAS_TOKEN")
     if not canvas_token:
         raise HTTPException(status_code=400, detail="No Canvas token found.")
 
