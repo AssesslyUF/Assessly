@@ -20,7 +20,7 @@ function QuizReview() {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
-  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<'delete' | 'save' | 'publish' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -177,7 +177,7 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
 
       {/* Finish modal */}
       {isFinishModalOpen && (
-        <div className="quiz-review-modal-overlay" role="presentation" onClick={() => { if (!isActionLoading) setIsFinishModalOpen(false); }}>
+        <div className="quiz-review-modal-overlay" role="presentation" onClick={() => { if (!activeAction) setIsFinishModalOpen(false); }}>
           <div className="quiz-review-delete-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2 className="quiz-review-delete-title">Finished Quiz Review</h2>
             <p className="quiz-review-delete-text">What would you like to do with this quiz?</p>
@@ -186,7 +186,7 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
               <button
                 type="button"
                 className="quiz-review-delete-cancel"
-                disabled={isActionLoading}
+                disabled={!!activeAction}
                 onClick={() => { setIsFinishModalOpen(false); navigate('/dashboard'); }}
               >
                 Keep as Draft
@@ -194,10 +194,10 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
               <button
                 type="button"
                 className="quiz-review-delete-cancel"
-                disabled={isActionLoading}
+                disabled={!!activeAction}
                 onClick={async () => {
                   if (!quizId) return;
-                  setIsActionLoading(true);
+                  setActiveAction('delete');
                   setActionError(null);
                   try {
                     await api.deleteQuiz(quizId);
@@ -205,19 +205,19 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
                     navigate('/dashboard');
                   } catch (e: any) {
                     setActionError(e.message || 'Failed to delete quiz.');
-                    setIsActionLoading(false);
+                    setActiveAction(null);
                   }
                 }}
               >
-                {isActionLoading ? 'Deleting...' : 'Delete Quiz'}
+                {activeAction === 'delete' ? 'Deleting...' : 'Delete Quiz'}
               </button>
               <button
                 type="button"
                 className="quiz-review-delete-cancel"
-                disabled={isActionLoading}
+                disabled={!!activeAction}
                 onClick={async () => {
                   if (!quizId) return;
-                  setIsActionLoading(true);
+                  setActiveAction('save');
                   setActionError(null);
                   try {
                     await api.saveQuizToCanvas(quizId);
@@ -225,19 +225,19 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
                     navigate('/dashboard');
                   } catch (e: any) {
                     setActionError(e.message || 'Failed to save quiz to Canvas.');
-                    setIsActionLoading(false);
+                    setActiveAction(null);
                   }
                 }}
               >
-                {isActionLoading ? 'Saving...' : 'Save to Canvas'}
+                {activeAction === 'save' ? 'Saving...' : 'Save to Canvas'}
               </button>
               <button
                 type="button"
                 className="quiz-review-delete-confirm"
-                disabled={isActionLoading}
+                disabled={!!activeAction}
                 onClick={async () => {
                   if (!quizId) return;
-                  setIsActionLoading(true);
+                  setActiveAction('publish');
                   setActionError(null);
                   try {
                     await api.publishQuiz(quizId);
@@ -245,11 +245,11 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
                     navigate('/dashboard');
                   } catch (e: any) {
                     setActionError(e.message || 'Failed to publish quiz.');
-                    setIsActionLoading(false);
+                    setActiveAction(null);
                   }
                 }}
               >
-                {isActionLoading ? 'Uploading...' : 'Publish to Canvas'}
+                {activeAction === 'publish' ? 'Uploading...' : 'Publish to Canvas'}
               </button>
             </div>
           </div>
