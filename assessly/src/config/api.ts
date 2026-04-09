@@ -106,6 +106,16 @@ saveQuizToCanvas: async (quizId: string) => {
     return response.json();
   },
 
+deleteQuiz: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}`, { method: 'DELETE', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to delete quiz');
+    }
+    return response.json();
+  },
+
 generateQuiz: async (files: { url: string; display_name: string; content_type: string }[], course_id?: number, quiz_ids?: number[], question_count?: number, title?: string) => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}/api/generate-quiz`, {

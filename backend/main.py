@@ -26,7 +26,7 @@ from database import get_or_create_user, update_user, users_collection, course_q
 from clerk_auth import verify_clerk_token
 from canvas_retriever import CanvasContentRetriever
 from gemini_retriever import generate_quiz_from_files
-from canvas_publisher import publish_quiz_to_canvas, get_all_new_quizzes_for_course
+from canvas_publisher import publish_quiz_to_canvas, get_all_new_quizzes_for_course, delete_quiz_from_canvas
 import markdown as md_lib
 from encryption import encrypt, decrypt
 
@@ -612,3 +612,36 @@ async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_us
         }}
     )
     return {"quiz_id": quiz_id, "new_quiz_id": publish_result["new_quiz_id"], "assignment_id": publish_result["assignment_id"]}
+
+
+@app.delete("/api/quizzes/{quiz_id}")
+async def delete_quiz(quiz_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Delete a quiz from MongoDB and, if it exists on Canvas, from Canvas too.
+    """
+    try:
+        quiz = course_quizzes_collection.find_one({"_id": ObjectId(quiz_id), "clerk_id": current_user["clerk_id"]})
+    except Exception:
+        # ObjectId() throws if quiz_id is malformed (wrong format) — that's a bad request, not a missing resource
+        raise HTTPException(status_code=400, detail="Invalid quiz ID.")
+
+    # ObjectId was valid but no document matched — the quiz genuinely doesn't exist
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+
+    # Delete from Canvas if it was published/saved there
+    new_quiz_id = quiz.get("new_quiz_id")
+    course_id = quiz.get("course_id")
+    if new_quiz_id and course_id:
+        canvas_token = current_user.get("canvas_token")
+        if canvas_token:
+            canvas_token = decrypt(canvas_token)
+        if not canvas_token:
+            raise HTTPException(status_code=400, detail="No Canvas token found.")
+        try:
+            delete_quiz_from_canvas(course_id, str(new_quiz_id), canvas_token)
+        except RuntimeError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+
+    course_quizzes_collection.delete_one({"_id": ObjectId(quiz_id)})
+    return {"deleted": True}

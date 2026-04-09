@@ -200,6 +200,26 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
                   setIsActionLoading(true);
                   setActionError(null);
                   try {
+                    await api.deleteQuiz(quizId);
+                    setIsFinishModalOpen(false);
+                    navigate('/dashboard');
+                  } catch (e: any) {
+                    setActionError(e.message || 'Failed to delete quiz.');
+                    setIsActionLoading(false);
+                  }
+                }}
+              >
+                {isActionLoading ? 'Deleting...' : 'Delete Quiz'}
+              </button>
+              <button
+                type="button"
+                className="quiz-review-delete-cancel"
+                disabled={isActionLoading}
+                onClick={async () => {
+                  if (!quizId) return;
+                  setIsActionLoading(true);
+                  setActionError(null);
+                  try {
                     await api.saveQuizToCanvas(quizId);
                     setIsFinishModalOpen(false);
                     navigate('/dashboard');

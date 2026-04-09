@@ -149,6 +149,19 @@ def publish_quiz_to_canvas(quiz_doc: dict, canvas_token: str, publish: bool = Tr
     }
 
 
+def delete_quiz_from_canvas(course_id: int, new_quiz_id: str, canvas_token: str) -> None:
+    """
+    Deletes a New Quiz from Canvas. Raises RuntimeError if the request fails.
+    """
+    headers = {"Authorization": f"Bearer {canvas_token}"}
+    resp = requests.delete(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Failed to delete quiz from Canvas: {resp.status_code} {resp.text}")
+
+
 def get_all_new_quizzes_for_course(course_id: int, canvas_token: str) -> dict:
     """
     Fetches all New Quizzes for a course in one call.
