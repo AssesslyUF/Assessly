@@ -14,6 +14,7 @@ function QuizReview() {
 
   const [questions, setQuestions] = useState<any[]>([]);
   const [quizTitle, setQuizTitle] = useState('');
+  const [quizStatus, setQuizStatus] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +35,7 @@ function QuizReview() {
         const doc = await api.getQuiz(quizId!);
         setQuizTitle(doc.title || 'Quiz Review');
         setQuestions(doc.questions || []);
+        setQuizStatus(doc.status || '');
       } catch (e: any) {
         setError(e.message || 'Failed to load quiz.');
       } finally {
@@ -183,14 +185,16 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
             <p className="quiz-review-delete-text">What would you like to do with this quiz?</p>
             {actionError && <p style={{ color: 'red', fontSize: '0.9rem', margin: '0.5rem 0 0' }}>{actionError}</p>}
             <div className="quiz-review-delete-actions">
-              <button
-                type="button"
-                className="quiz-review-delete-cancel"
-                disabled={!!activeAction}
-                onClick={() => { setIsFinishModalOpen(false); navigate('/dashboard'); }}
-              >
-                Keep as Draft
-              </button>
+              {quizStatus !== 'generated_pending_review' && (
+                <button
+                  type="button"
+                  className="quiz-review-delete-cancel"
+                  disabled={!!activeAction}
+                  onClick={() => { setIsFinishModalOpen(false); navigate('/dashboard'); }}
+                >
+                  Keep as Draft
+                </button>
+              )}
               <button
                 type="button"
                 className="quiz-review-delete-cancel"
