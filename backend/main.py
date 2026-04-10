@@ -26,7 +26,7 @@ from database import get_or_create_user, update_user, users_collection, course_q
 from clerk_auth import verify_clerk_token
 from canvas_retriever import CanvasContentRetriever
 from gemini_retriever import generate_quiz_from_files
-from canvas_publisher import publish_quiz_to_canvas, get_all_new_quizzes_for_course, delete_quiz_from_canvas
+from canvas_publisher import publish_quiz_to_canvas, publish_existing_canvas_quiz, get_all_new_quizzes_for_course, delete_quiz_from_canvas
 import markdown as md_lib
 from encryption import encrypt, decrypt
 
@@ -588,8 +588,21 @@ async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_us
     if quiz_doc["status"] == "published_on_canvas":
         raise HTTPException(status_code=400, detail="Quiz is already published.")
 
+    existing_canvas_id = quiz_doc.get("new_quiz_id")
+
     try:
-        publish_result = publish_quiz_to_canvas(quiz_doc, canvas_token, publish=True)
+        if existing_canvas_id:
+            # Quiz was already saved to Canvas as a draft — just publish it in place, don't recreate it
+            publish_existing_canvas_quiz(quiz_doc["course_id"], str(existing_canvas_id), canvas_token)
+            new_quiz_id = existing_canvas_id
+            assignment_id = quiz_doc.get("assignment_id", existing_canvas_id)
+            question_updates = {}
+        else:
+            # Quiz has never been sent to Canvas — create it and publish in one shot
+            publish_result = publish_quiz_to_canvas(quiz_doc, canvas_token, publish=True)
+            new_quiz_id = publish_result["new_quiz_id"]
+            assignment_id = publish_result["assignment_id"]
+            question_updates = {f"questions.{i}.canvas_item_id": q["canvas_item_id"] for i, q in enumerate(publish_result["questions"])}
     except RuntimeError as e:
         course_quizzes_collection.update_one(
             {"_id": ObjectId(quiz_id)},
@@ -598,20 +611,19 @@ async def publish_quiz(quiz_id: str, current_user: dict = Depends(get_current_us
         raise HTTPException(status_code=502, detail=str(e))
 
     now = datetime.now(timezone.utc)
-    question_updates = {f"questions.{i}.canvas_item_id": q["canvas_item_id"] for i, q in enumerate(publish_result["questions"])}
     course_quizzes_collection.update_one(
         {"_id": ObjectId(quiz_id)},
         {"$set": {
             "status": "published_on_canvas",
-            "new_quiz_id": publish_result["new_quiz_id"],
-            "assignment_id": publish_result["assignment_id"],
+            "new_quiz_id": new_quiz_id,
+            "assignment_id": assignment_id,
             "publish_metadata.published_at": now,
             "publish_metadata.last_error": None,
             "updated_at": now,
             **question_updates
         }}
     )
-    return {"quiz_id": quiz_id, "new_quiz_id": publish_result["new_quiz_id"], "assignment_id": publish_result["assignment_id"]}
+    return {"quiz_id": quiz_id, "new_quiz_id": new_quiz_id, "assignment_id": assignment_id}
 
 
 @app.delete("/api/quizzes/{quiz_id}")
