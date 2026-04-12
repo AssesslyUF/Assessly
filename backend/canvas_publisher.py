@@ -74,6 +74,7 @@ def publish_quiz_to_canvas(quiz_doc: dict, canvas_token: str, publish: bool = Tr
         item_payload = {
             "item": {
                 "entry_type": "Item",
+                "points_possible": question.get("points_possible", 1),
                 "entry": {
                     "title": f"Question {question['position']}",
                     "points_possible": question.get("points_possible", 1),
