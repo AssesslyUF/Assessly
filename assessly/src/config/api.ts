@@ -106,6 +106,20 @@ saveQuizToCanvas: async (quizId: string) => {
     return response.json();
   },
 
+saveQuizEdits: async (quizId: string, questions: { internal_question_id: string; points_possible: number }[]) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/edits`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ questions }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to save quiz edits');
+    }
+    return response.json();
+  },
+
 unpublishQuiz: async (quizId: string) => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/unpublish`, { method: 'POST', headers });

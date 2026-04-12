@@ -177,6 +177,39 @@ def publish_existing_canvas_quiz(course_id: int, new_quiz_id: str, canvas_token:
         raise RuntimeError(f"Failed to publish existing quiz: {patch_resp.status_code} {patch_resp.text}")
 
 
+def update_item_points_on_canvas(course_id: int, new_quiz_id: str, canvas_item_id: str, points_possible: float, canvas_token: str) -> None:
+    """
+    Updates the points_possible for a single question item already on Canvas.
+    Fetches the full item first then PATCHes it back with the updated points,
+    since the Canvas New Quizzes API requires the full item body on update.
+    Raises RuntimeError on failure.
+    """
+    headers = {
+        "Authorization": f"Bearer {canvas_token}",
+        "Content-Type": "application/json"
+    }
+    get_resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}/items/{canvas_item_id}",
+        headers=headers
+    )
+    if not get_resp.ok:
+        raise RuntimeError(f"Failed to fetch item {canvas_item_id} for points update: {get_resp.status_code} {get_resp.text}")
+
+    item_data = get_resp.json()
+    # points_possible lives at the item level in the Canvas response
+    item_data["points_possible"] = points_possible
+    if "entry" in item_data:
+        item_data["entry"]["points_possible"] = points_possible
+
+    patch_resp = requests.patch(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}/items/{canvas_item_id}",
+        headers=headers,
+        json={"item": item_data}
+    )
+    if not patch_resp.ok:
+        raise RuntimeError(f"Failed to update points for item {canvas_item_id}: {patch_resp.status_code} {patch_resp.text}")
+
+
 def unpublish_canvas_quiz(course_id: int, new_quiz_id: str, canvas_token: str) -> None:
     """
     Unpublishes a quiz on Canvas by PATCHing published=False.

@@ -26,7 +26,7 @@ from database import get_or_create_user, update_user, users_collection, course_q
 from clerk_auth import verify_clerk_token
 from canvas_retriever import CanvasContentRetriever
 from gemini_retriever import generate_quiz_from_files
-from canvas_publisher import publish_quiz_to_canvas, publish_existing_canvas_quiz, unpublish_canvas_quiz, get_all_new_quizzes_for_course, delete_quiz_from_canvas
+from canvas_publisher import publish_quiz_to_canvas, publish_existing_canvas_quiz, unpublish_canvas_quiz, update_item_points_on_canvas, get_all_new_quizzes_for_course, delete_quiz_from_canvas
 import markdown as md_lib
 from encryption import encrypt, decrypt
 
@@ -738,3 +738,59 @@ async def unpublish_quiz(quiz_id: str, current_user: dict = Depends(get_current_
         {"$set": {"status": "saved_to_canvas", "updated_at": datetime.now(timezone.utc)}}
     )
     return {"unpublished": True}
+
+
+class QuestionUpdate(BaseModel):
+    internal_question_id: str
+    points_possible: float
+
+
+class SaveQuizEditsBody(BaseModel):
+    questions: list[QuestionUpdate]
+
+
+@app.patch("/api/quizzes/{quiz_id}/edits")
+async def save_quiz_edits(quiz_id: str, body: SaveQuizEditsBody, current_user: dict = Depends(get_current_user)):
+    """
+    Save edits to quiz questions (currently: points_possible per question).
+    If the quiz is on Canvas, also syncs points to each Canvas item.
+    """
+    try:
+        quiz = course_quizzes_collection.find_one({"_id": ObjectId(quiz_id), "clerk_id": current_user["clerk_id"]})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid quiz ID.")
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+
+    # Build a lookup from internal_question_id → index in the questions array
+    id_to_index = {q["internal_question_id"]: i for i, q in enumerate(quiz.get("questions", []))}
+
+    updates = {}
+    for q_update in body.questions:
+        idx = id_to_index.get(q_update.internal_question_id)
+        if idx is None:
+            raise HTTPException(status_code=400, detail=f"Question {q_update.internal_question_id} not found in quiz.")
+        updates[f"questions.{idx}.points_possible"] = q_update.points_possible
+
+    updates["updated_at"] = datetime.now(timezone.utc)
+    course_quizzes_collection.update_one({"_id": ObjectId(quiz_id)}, {"$set": updates})
+
+    # If the quiz is already on Canvas, sync points to each item
+    new_quiz_id = quiz.get("new_quiz_id")
+    course_id = quiz.get("course_id")
+    if new_quiz_id and course_id and quiz.get("status") in ("saved_to_canvas", "published_on_canvas"):
+        canvas_token = current_user.get("canvas_token")
+        if canvas_token:
+            canvas_token = decrypt(canvas_token)
+        if canvas_token:
+            questions_by_id = {q["internal_question_id"]: q for q in quiz.get("questions", [])}
+            for q_update in body.questions:
+                q = questions_by_id.get(q_update.internal_question_id)
+                canvas_item_id = q.get("canvas_item_id") if q else None
+                if canvas_item_id:
+                    try:
+                        update_item_points_on_canvas(course_id, str(new_quiz_id), str(canvas_item_id), q_update.points_possible, canvas_token)
+                    except RuntimeError as e:
+                        raise HTTPException(status_code=502, detail=str(e))
+
+    return {"saved": True}

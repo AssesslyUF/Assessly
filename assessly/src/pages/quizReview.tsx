@@ -24,6 +24,12 @@ function QuizReview() {
   const [activeAction, setActiveAction] = useState<'delete' | 'revert' | 'save' | 'publish' | 'unpublish' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Tracks edited points per question: { [internal_question_id]: points }
+  // Allows empty string mid-edit so the user can fully backspace before typing a new value
+  const [pointsEdits, setPointsEdits] = useState<Record<string, number | string>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!quizId) {
       setError('No quiz ID provided.');
@@ -46,6 +52,39 @@ function QuizReview() {
   }, [quizId]);
 
   const activeQuestion = questions[activeQuestionIndex];
+
+  async function handleSave() {
+    if (!quizId) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      // Build the full list of questions with any edited points merged in
+      // Coerce to number — empty string edits fall back to 1
+      const resolvedPoints = (id: string, fallback: number): number => {
+        const edit = pointsEdits[id];
+        if (edit === '' || edit === undefined) return fallback;
+        const n = Number(edit);
+        return isNaN(n) || n < 1 ? 1 : n;
+      };
+      const questionUpdates = questions.map((q) => ({
+        internal_question_id: q.internal_question_id,
+        points_possible: resolvedPoints(q.internal_question_id, q.points_possible),
+      }));
+      await api.saveQuizEdits(quizId, questionUpdates);
+      // Commit edits into questions state so UI reflects saved values
+      setQuestions((prev) =>
+        prev.map((q) => ({
+          ...q,
+          points_possible: resolvedPoints(q.internal_question_id, q.points_possible),
+        }))
+      );
+      setPointsEdits({});
+    } catch (e: any) {
+      setSaveError(e.message || 'Failed to save.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
 if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading quiz...</p></div>;
   if (error) return <div className="page"><p style={{ padding: '2rem' }}>Error: {error}</p></div>;
@@ -97,8 +136,40 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
                       <div className="quiz-review-title-block">
                         <p className="quiz-review-group">{quizTitle}</p>
                         <p className="quiz-review-question-label">Question {activeQuestionIndex + 1}</p>
+                        <div className="quiz-review-points-row">
+                          <input
+                            type="number"
+                            min={1}
+                            step={1}
+                            className="quiz-review-points-input"
+                            value={pointsEdits[activeQuestion.internal_question_id] ?? activeQuestion.points_possible}
+                            onChange={(e) => {
+                              // Allow empty string so the user can fully backspace before typing
+                              setPointsEdits((prev) => ({ ...prev, [activeQuestion.internal_question_id]: e.target.value }));
+                            }}
+                            onBlur={(e) => {
+                              const val = parseFloat(e.target.value);
+                              // Revert to 1 if left empty or invalid
+                              setPointsEdits((prev) => ({ ...prev, [activeQuestion.internal_question_id]: isNaN(val) || val < 1 ? 1 : val }));
+                            }}
+                          />
+                          <span className="quiz-review-points-label">pts</span>
+                        </div>
+                        {saveError && <p style={{ color: 'red', fontSize: '0.8rem', margin: '0.25rem 0 0' }}>{saveError}</p>}
                       </div>
                       <div className="quiz-review-side-actions">
+                        <button
+                          type="button"
+                          className="quiz-review-icon-button"
+                          aria-label="Save changes"
+                          disabled={isSaving}
+                          onClick={handleSave}
+                        >
+                          {isSaving
+                            ? <span className="quiz-review-save-spinner" aria-hidden="true" />
+                            : <span className="quiz-review-save-icon" aria-hidden="true" />
+                          }
+                        </button>
                         <button type="button" className="quiz-review-icon-button" aria-label="Add question">
                           <span className="quiz-review-plus-icon" aria-hidden="true">+</span>
                         </button>

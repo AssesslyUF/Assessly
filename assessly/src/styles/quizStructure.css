@@ -662,6 +662,92 @@
     gap: 0.7rem;
 }
 
+/* Points input */
+.quiz-review-points-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.quiz-review-points-input {
+    width: 3rem;
+    padding: 0.2rem 0.35rem;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 0.9rem;
+    color: #1f2f2c;
+    background: #f5f5f5;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.quiz-review-points-input::-webkit-outer-spin-button,
+.quiz-review-points-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quiz-review-points-input:focus {
+    border-color: #2d6a5f;
+    background: #ffffff;
+}
+
+.quiz-review-points-label {
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Save icon — floppy disk drawn with CSS */
+.quiz-review-save-icon {
+    position: relative;
+    display: block;
+    width: 0.95rem;
+    height: 0.95rem;
+    border: 2.5px solid #ffffff;
+    border-radius: 2px;
+}
+
+.quiz-review-save-icon::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0.15rem;
+    width: 0.45rem;
+    height: 0.28rem;
+    background: #ffffff;
+    border-radius: 0 0 2px 2px;
+}
+
+.quiz-review-save-icon::after {
+    content: "";
+    position: absolute;
+    bottom: 0.1rem;
+    left: 0.12rem;
+    right: 0.12rem;
+    height: 0.38rem;
+    border: 2px solid #ffffff;
+    border-radius: 1px;
+}
+
+/* Save spinner */
+@keyframes quiz-save-spin {
+    to { transform: rotate(360deg); }
+}
+
+.quiz-review-save-spinner {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: quiz-save-spin 0.7s linear infinite;
+}
+
 .quiz-review-plus-icon {
     font-family: "Red Hat Display", sans-serif;
     font-size: 2.1rem;
