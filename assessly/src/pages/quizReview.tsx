@@ -21,7 +21,7 @@ function QuizReview() {
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
-  const [activeAction, setActiveAction] = useState<'delete' | 'save' | 'publish' | null>(null);
+  const [activeAction, setActiveAction] = useState<'delete' | 'revert' | 'save' | 'publish' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -185,16 +185,7 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
             <p className="quiz-review-delete-text">What would you like to do with this quiz?</p>
             {actionError && <p style={{ color: 'red', fontSize: '0.9rem', margin: '0.5rem 0 0' }}>{actionError}</p>}
             <div className="quiz-review-delete-actions">
-              {quizStatus !== 'generated_pending_review' && (
-                <button
-                  type="button"
-                  className="quiz-review-delete-cancel"
-                  disabled={!!activeAction}
-                  onClick={() => { setIsFinishModalOpen(false); navigate('/dashboard'); }}
-                >
-                  Keep as Draft
-                </button>
-              )}
+              {/* Delete — always shown */}
               <button
                 type="button"
                 className="quiz-review-delete-cancel"
@@ -215,46 +206,78 @@ if (loading) return <div className="page"><p style={{ padding: '2rem' }}>Loading
               >
                 {activeAction === 'delete' ? 'Deleting...' : 'Delete Quiz'}
               </button>
-              <button
-                type="button"
-                className="quiz-review-delete-cancel"
-                disabled={!!activeAction}
-                onClick={async () => {
-                  if (!quizId) return;
-                  setActiveAction('save');
-                  setActionError(null);
-                  try {
-                    await api.saveQuizToCanvas(quizId);
-                    setIsFinishModalOpen(false);
-                    navigate('/dashboard');
-                  } catch (e: any) {
-                    setActionError(e.message || 'Failed to save quiz to Canvas.');
-                    setActiveAction(null);
-                  }
-                }}
-              >
-                {activeAction === 'save' ? 'Saving...' : 'Save to Canvas'}
-              </button>
-              <button
-                type="button"
-                className="quiz-review-delete-confirm"
-                disabled={!!activeAction}
-                onClick={async () => {
-                  if (!quizId) return;
-                  setActiveAction('publish');
-                  setActionError(null);
-                  try {
-                    await api.publishQuiz(quizId);
-                    setIsFinishModalOpen(false);
-                    navigate('/dashboard');
-                  } catch (e: any) {
-                    setActionError(e.message || 'Failed to publish quiz.');
-                    setActiveAction(null);
-                  }
-                }}
-              >
-                {activeAction === 'publish' ? 'Uploading...' : 'Publish to Canvas'}
-              </button>
+
+              {/* saved_to_canvas: revert to draft (removes from Canvas, keeps in MongoDB) */}
+              {quizStatus === 'saved_to_canvas' && (
+                <button
+                  type="button"
+                  className="quiz-review-delete-cancel"
+                  disabled={!!activeAction}
+                  onClick={async () => {
+                    if (!quizId) return;
+                    setActiveAction('revert');
+                    setActionError(null);
+                    try {
+                      await api.revertToDraft(quizId);
+                      setIsFinishModalOpen(false);
+                      navigate('/dashboard');
+                    } catch (e: any) {
+                      setActionError(e.message || 'Failed to revert quiz to draft.');
+                      setActiveAction(null);
+                    }
+                  }}
+                >
+                  {activeAction === 'revert' ? 'Reverting...' : 'Save as Draft'}
+                </button>
+              )}
+
+              {/* generated_pending_review: save to Canvas (unpublished) */}
+              {quizStatus === 'generated_pending_review' && (
+                <button
+                  type="button"
+                  className="quiz-review-delete-cancel"
+                  disabled={!!activeAction}
+                  onClick={async () => {
+                    if (!quizId) return;
+                    setActiveAction('save');
+                    setActionError(null);
+                    try {
+                      await api.saveQuizToCanvas(quizId);
+                      setIsFinishModalOpen(false);
+                      navigate('/dashboard');
+                    } catch (e: any) {
+                      setActionError(e.message || 'Failed to save quiz to Canvas.');
+                      setActiveAction(null);
+                    }
+                  }}
+                >
+                  {activeAction === 'save' ? 'Saving...' : 'Save to Canvas'}
+                </button>
+              )}
+
+              {/* Publish — shown for draft and saved_to_canvas */}
+              {(quizStatus === 'generated_pending_review' || quizStatus === 'saved_to_canvas') && (
+                <button
+                  type="button"
+                  className="quiz-review-delete-confirm"
+                  disabled={!!activeAction}
+                  onClick={async () => {
+                    if (!quizId) return;
+                    setActiveAction('publish');
+                    setActionError(null);
+                    try {
+                      await api.publishQuiz(quizId);
+                      setIsFinishModalOpen(false);
+                      navigate('/dashboard');
+                    } catch (e: any) {
+                      setActionError(e.message || 'Failed to publish quiz.');
+                      setActiveAction(null);
+                    }
+                  }}
+                >
+                  {activeAction === 'publish' ? 'Uploading...' : 'Publish to Canvas'}
+                </button>
+              )}
             </div>
           </div>
         </div>

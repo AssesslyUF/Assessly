@@ -657,3 +657,46 @@ async def delete_quiz(quiz_id: str, current_user: dict = Depends(get_current_use
 
     course_quizzes_collection.delete_one({"_id": ObjectId(quiz_id)})
     return {"deleted": True}
+
+
+@app.post("/api/quizzes/{quiz_id}/revert-to-draft")
+async def revert_to_draft(quiz_id: str, current_user: dict = Depends(get_current_user)):
+    """
+    Remove a quiz from Canvas (delete it there) but keep it in MongoDB as a draft.
+    Only valid for quizzes with status saved_to_canvas.
+    """
+    try:
+        quiz = course_quizzes_collection.find_one({"_id": ObjectId(quiz_id), "clerk_id": current_user["clerk_id"]})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid quiz ID.")
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+    if quiz["status"] != "saved_to_canvas":
+        raise HTTPException(status_code=400, detail="Only quizzes saved to Canvas can be reverted to draft.")
+
+    new_quiz_id = quiz.get("new_quiz_id")
+    course_id = quiz.get("course_id")
+    if new_quiz_id and course_id:
+        canvas_token = current_user.get("canvas_token")
+        if canvas_token:
+            canvas_token = decrypt(canvas_token)
+        if not canvas_token:
+            raise HTTPException(status_code=400, detail="No Canvas token found.")
+        try:
+            delete_quiz_from_canvas(course_id, str(new_quiz_id), canvas_token)
+        except RuntimeError as e:
+            raise HTTPException(status_code=502, detail=str(e))
+
+    # Clear all Canvas IDs and reset status to draft
+    question_clear = {f"questions.{i}.canvas_item_id": None for i in range(len(quiz.get("questions", [])))}
+    course_quizzes_collection.update_one(
+        {"_id": ObjectId(quiz_id)},
+        {"$set": {
+            "status": "generated_pending_review",
+            "new_quiz_id": None,
+            "assignment_id": None,
+            "updated_at": datetime.now(timezone.utc),
+            **question_clear
+        }}
+    )
+    return {"reverted": True}
