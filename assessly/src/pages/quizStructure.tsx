@@ -1,6 +1,5 @@
 import questionMark from '../assets/Question_Mark.png';
 import backArrow from '../assets/Caret_Left.png';
-import star from '../assets/star.png';
 
 import '../styles/quizStructure.css';
 
@@ -612,15 +611,8 @@ function QuizStructure() {
         {isGenerating && (
             <div className="quiz-generating-overlay" role="status" aria-live="polite" aria-label="Quiz is generating">
                 <div className="quiz-generating-stack">
-                    <div className="quiz-generating-row">
-                        <div aria-hidden="true">
-                            <img src={star}></img>
-                        </div>
-                        <p className="quiz-generating-text">
-                            <span>Quiz</span>
-                            <span>Generating</span>
-                        </p>
-                    </div>
+                    <div className="cube-loader" aria-hidden="true" />
+                    <p className="quiz-generating-label">Crafting your quiz</p>
                 </div>
             </div>
         )}

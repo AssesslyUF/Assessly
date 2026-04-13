@@ -1,0 +1,495 @@
+/* ─── Quiz Review Page Layout ─── */
+
+.qr-page {
+  overflow: hidden;
+}
+
+.qr-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+/* ─── Sidebar ─── */
+
+.qr-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  flex-shrink: 0;
+  background: #f5f5f3;
+  border: 1px solid #e0e0dd;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.qr-sidebar-header {
+  padding: 1rem 1.1rem 0.85rem;
+  border-bottom: 1px solid #e0e0dd;
+}
+
+.qr-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.qr-back-btn:hover {
+  color: #111;
+}
+
+.qr-back-btn .back-arrow {
+  width: 0.7rem;
+  height: auto;
+  padding: 4px;
+  border-radius: 50%;
+  background: #333;
+}
+
+.qr-sidebar-quiz-title {
+  margin: 0 0 0.25rem;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qr-sidebar-count {
+  margin: 0;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.8rem;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qr-sidebar-count span {
+  font-weight: 700;
+  color: #111;
+}
+
+.qr-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #f5f5f3;
+}
+
+.qr-sidebar-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.qr-sidebar-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 999px;
+}
+
+.qr-sidebar-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e0e0dd;
+  border-radius: 10px;
+  background: #ffffff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.qr-sidebar-item:hover {
+  border-color: #bbb;
+}
+
+.qr-sidebar-item.active {
+  border-color: #468278;
+  background: #ffffff;
+}
+
+.qr-sidebar-num {
+  flex-shrink: 0;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #777;
+  width: 1rem;
+  padding-top: 1px;
+}
+
+.qr-sidebar-item.active .qr-sidebar-num {
+  color: #468278;
+}
+
+.qr-sidebar-preview {
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.78rem;
+  color: #333;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.qr-sidebar-footer {
+  padding: 0.75rem 0.65rem;
+  border-top: 1px solid #e0e0dd;
+}
+
+.qr-finish-btn {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.qr-finish-btn:hover {
+  background: #333;
+}
+
+/* ─── Main panel ─── */
+
+.qr-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.qr-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e0e0dd;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+/* ─── Card top bar ─── */
+
+.qr-card-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem 0.85rem;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.qr-card-topleft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.qr-question-label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.qr-question-label {
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.qr-points-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.qr-save-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #c0392b;
+}
+
+.qr-card-topright {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.qr-card-topright-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.qr-question-type {
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: #666;
+}
+
+.qr-save-text-btn {
+  padding: 0.3rem 0.9rem;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.qr-save-text-btn:hover {
+  background: #333;
+}
+
+.qr-save-text-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Question delete trash button — bare, no box */
+.qr-trash-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 100ms ease;
+}
+
+.qr-trash-btn:hover {
+  background: rgba(217, 48, 37, 0.08);
+}
+
+/* ─── Question textarea ─── */
+
+.qr-question-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 1.4rem;
+  width: calc(100% - 2.8rem);
+  padding: 1rem 1.1rem;
+  border: none;
+  border-radius: 10px;
+  background: #f5f5f3;
+  resize: none;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: clamp(0.95rem, 1.35vw, 1.15rem);
+  font-weight: 400;
+  color: #111;
+  line-height: 1.55;
+  outline: none;
+  flex-shrink: 0;
+}
+
+/* ─── Answer choices ─── */
+
+.qr-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.75rem 1.4rem;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc #fff;
+}
+
+.qr-choices::-webkit-scrollbar {
+  width: 5px;
+}
+
+.qr-choices::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 999px;
+}
+
+.qr-choice-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Custom radio circle */
+.qr-radio-circle {
+  flex-shrink: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  border: 2px solid #c8c8c4;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-radio-circle.correct {
+  border-color: #468278;
+  background: #468278;
+}
+
+.qr-choice-input {
+  flex: 1;
+  padding: 0.6rem 0.9rem;
+  border: 1.5px solid #e0e0dd;
+  border-radius: 8px;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.95rem;
+  color: #111;
+  background: #fafaf9;
+  outline: none;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.qr-choice-input.correct {
+  border-color: #468278;
+  background: #f0f8f5;
+}
+
+/* Choice trash button — bare */
+.qr-choice-trash-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 100ms ease;
+}
+
+.qr-choice-trash-btn:hover {
+  background: rgba(217, 48, 37, 0.08);
+}
+
+/* ─── Add question button ─── */
+
+.qr-add-question-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: calc(100% - 2.8rem);
+  margin: 0 1.4rem 1.1rem;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: 1.5px dashed #c0c0bc;
+  border-radius: 10px;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #888;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.qr-add-question-btn:hover {
+  border-color: #888;
+  color: #444;
+}
+
+/* ─── Navigation (outside card) ─── */
+
+.qr-nav {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.qr-nav-back,
+.qr-nav-next {
+  flex: 1;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-family: "Red Hat Display", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.qr-nav-back {
+  background: #ffffff;
+  border: 1.5px solid #d0d0cc;
+  color: #111;
+}
+
+.qr-nav-back:hover {
+  border-color: #999;
+}
+
+.qr-nav-next {
+  background: #468278;
+  border: none;
+  color: #ffffff;
+}
+
+.qr-nav-next:hover {
+  background: #3a6e65;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 780px) {
+  .qr-layout {
+    flex-direction: column;
+  }
+
+  .qr-sidebar {
+    width: 100%;
+    max-height: 200px;
+  }
+
+  .qr-sidebar-list {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .qr-sidebar-item {
+    flex-direction: column;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+}

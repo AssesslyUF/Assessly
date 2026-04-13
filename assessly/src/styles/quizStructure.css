@@ -684,8 +684,8 @@
 
 /* Hourglass loader */
 .loader {
-    --c1: #673b14;
-    --c2: #f8b13b;
+    --c1: #2d5f56;
+    --c2: #83c7bf;
     width: 40px;
     height: 80px;
     border-top: 4px solid var(--c1);
@@ -1074,6 +1074,52 @@
     outline-offset: 2px;
 }
 
+/* Cube stacking loader */
+.cube-loader {
+  width: 90px;
+  height: 14px;
+  box-shadow: 0 3px 0 #2d5f56;
+  position: relative;
+  clip-path: inset(-40px 0 -5px);
+}
+
+.cube-loader::before {
+  content: "";
+  position: absolute;
+  inset: auto calc(50% - 17px) 0;
+  height: 50px;
+  --g: no-repeat linear-gradient(#468278 0 0);
+  background: var(--g), var(--g), var(--g), var(--g);
+  background-size: 16px 14px;
+  animation:
+    l7-1 2s infinite linear,
+    l7-2 2s infinite linear;
+}
+
+@keyframes l7-1 {
+  0%,
+  100%  { background-position: 0 -50px, 100% -50px; }
+  17.5% { background-position: 0 100%, 100% -50px, 0 -50px, 100% -50px; }
+  35%   { background-position: 0 100%, 100% 100%, 0 -50px, 100% -50px; }
+  52.5% { background-position: 0 100%, 100% 100%, 0 calc(100% - 16px), 100% -50px; }
+  70%,
+  98%   { background-position: 0 100%, 100% 100%, 0 calc(100% - 16px), 100% calc(100% - 16px); }
+}
+
+@keyframes l7-2 {
+  0%, 70% { transform: translate(0); }
+  100%    { transform: translate(200%); }
+}
+
+.quiz-generating-label {
+  font-family: "Red Hat Display", sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  font-style: italic;
+  color: #0d1518;
+  margin: 0;
+}
+
 .quiz-generating-overlay {
     position: fixed;
     inset: 0;
@@ -1088,11 +1134,10 @@
 
 .quiz-generating-stack {
     position: relative;
-    width: min(100%, 620px);
     display: flex;
     flex-direction: column;
-    gap: clamp(2rem, 5vh, 3.5rem);
-    filter: drop-shadow(0 12px 18px rgba(123, 167, 159, 0.48));
+    align-items: center;
+    gap: 2rem;
 }
 
 .quiz-generating-row {

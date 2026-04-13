@@ -6,6 +6,15 @@ import backArrow from '../assets/Caret_Left.png';
 import { api } from '../config/api';
 
 import '../styles/quizStructure.css';
+import '../styles/quizReview.css';
+
+/** Strip HTML tags, returning plain text for display in inputs/textareas. */
+function stripHtml(html: string): string {
+  if (!html) return '';
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
 
 function QuizReview() {
   const navigate = useNavigate();
@@ -24,13 +33,10 @@ function QuizReview() {
   const [activeAction, setActiveAction] = useState<'delete' | 'revert' | 'save' | 'publish' | 'unpublish' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Tracks edited points per question: { [internal_question_id]: points }
-  // Allows empty string mid-edit so the user can fully backspace before typing a new value
   const [pointsEdits, setPointsEdits] = useState<Record<string, number | string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Set of internal_question_ids that were updated during the Canvas sync
   const [changedQuestionIds, setChangedQuestionIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -44,7 +50,6 @@ function QuizReview() {
         const doc = await api.getQuiz(quizId!);
         const status = doc.status || '';
 
-        // If the quiz is on Canvas, sync first so we never show stale data
         if (status === 'saved_to_canvas' || status === 'published_on_canvas') {
           const syncResult = await api.syncFromCanvas(quizId!);
           setQuizTitle(syncResult.quiz.title || 'Quiz Review');
@@ -67,7 +72,6 @@ function QuizReview() {
 
   const activeQuestion = questions[activeQuestionIndex];
 
-  // Flushes any pending pointsEdits to the backend. Called implicitly before Canvas actions.
   async function flushEdits() {
     if (!quizId || Object.keys(pointsEdits).length === 0) return;
     const questionUpdates = Object.entries(pointsEdits).map(([id, val]) => ({
@@ -87,7 +91,6 @@ function QuizReview() {
 
   async function handleSave() {
     if (!quizId) return;
-    // Only send questions that actually have changes in pointsEdits
     if (Object.keys(pointsEdits).length === 0) return;
     setIsSaving(true);
     setSaveError(null);
@@ -97,7 +100,6 @@ function QuizReview() {
         points_possible: Number(val),
       }));
       await api.saveQuizEdits(quizId, questionUpdates);
-      // Commit only the changed questions into state
       setQuestions((prev) =>
         prev.map((q) =>
           q.internal_question_id in pointsEdits
@@ -113,7 +115,7 @@ function QuizReview() {
     }
   }
 
-if (loading) return (
+  if (loading) return (
     <div className="page">
       <div className="top-bar">
         <h2 className="top-bar-text">ASSESSLY</h2>
@@ -126,164 +128,211 @@ if (loading) return (
       </div>
     </div>
   );
+
   if (error) return <div className="page"><p style={{ padding: '2rem' }}>Error: {error}</p></div>;
 
   return (
-    <div className="page">
+    <div className="page qr-page">
+      {/* Top bar */}
       <div className="top-bar">
         <h2 className="top-bar-text" onClick={() => navigate('/dashboard')}>ASSESSLY</h2>
         <img src={questionMark} alt="Help button" className="top-bar-help" />
       </div>
       <hr />
 
-      <div className="content">
-        <div className="left">
-          <img
-            src={backArrow}
-            className="back-arrow"
-            alt="Back button"
-            onClick={() => navigate(-1)}
-            style={{ cursor: 'pointer' }}
-          />
-        </div>
+      {/* Two-column layout */}
+      <div className="qr-layout">
 
-        <div className="questions-container">
-          <div className="questions" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ display: 'flex', width: '100%', height: '100%', minHeight: 0 }}>
+        {/* ── Left sidebar ── */}
+        <aside className="qr-sidebar">
+          <div className="qr-sidebar-header">
+            <button
+              type="button"
+              className="qr-back-btn"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+            >
+              <img src={backArrow} className="back-arrow" alt="" />
+              <span>Back</span>
+            </button>
+            <p className="qr-sidebar-quiz-title">{quizTitle}</p>
+            <p className="qr-sidebar-count">Questions &nbsp;<span>{questions.length}</span></p>
+          </div>
 
-              {/* Question number sidebar */}
-              <div className="quiz-review-progress">
-                {questions.map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    className={`quiz-review-progress-item ${index === activeQuestionIndex ? 'active' : ''}`}
-                    onClick={() => setActiveQuestionIndex(index)}
-                    aria-label={`Go to question ${index + 1}`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
+          <div className="qr-sidebar-list">
+            {questions.map((q, index) => (
+              <button
+                key={q.internal_question_id || index}
+                type="button"
+                className={`qr-sidebar-item${index === activeQuestionIndex ? ' active' : ''}`}
+                onClick={() => setActiveQuestionIndex(index)}
+              >
+                <span className="qr-sidebar-num">{index + 1}</span>
+                <span className="qr-sidebar-preview">
+                  {stripHtml(q.question_stem_html).slice(0, 60) || 'Question'}
+                </span>
+              </button>
+            ))}
+          </div>
 
-              {/* Main panel */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1.9rem 2.1rem 1.35rem', minHeight: 0 }}>
-                {activeQuestion ? (
-                  <>
-                    {/* Header */}
-                    <div className="quiz-review-header">
-                      <div className="quiz-review-title-block">
-                        <p className="quiz-review-group">{quizTitle}</p>
-                        <p className="quiz-review-question-label">Question {activeQuestionIndex + 1}</p>
-                        {changedQuestionIds.has(activeQuestion.internal_question_id) && (
-                          <span className="quiz-review-new-changes-badge">New Changes</span>
-                        )}
-                        <div className="quiz-review-points-row">
-                          <input
-                            type="number"
-                            min={1}
-                            step={1}
-                            className="quiz-review-points-input"
-                            value={pointsEdits[activeQuestion.internal_question_id] ?? activeQuestion.points_possible}
-                            onChange={(e) => {
-                              // Allow empty string so the user can fully backspace before typing
-                              setPointsEdits((prev) => ({ ...prev, [activeQuestion.internal_question_id]: e.target.value }));
-                            }}
-                            onBlur={(e) => {
-                              const id = activeQuestion.internal_question_id;
-                              const raw = parseFloat(e.target.value);
-                              const resolved = isNaN(raw) || raw < 1 ? 1 : raw;
-                              setPointsEdits((prev) => {
-                                const next = { ...prev };
-                                // If resolved value matches the original, remove from edits (no change)
-                                if (resolved === activeQuestion.points_possible) {
-                                  delete next[id];
-                                } else {
-                                  next[id] = resolved;
-                                }
-                                return next;
-                              });
-                            }}
-                          />
-                          <span className="quiz-review-points-label">pts</span>
-                        </div>
-                        {saveError && <p style={{ color: 'red', fontSize: '0.8rem', margin: '0.25rem 0 0' }}>{saveError}</p>}
-                      </div>
-                      <div className="quiz-review-side-actions">
-                        <button
-                          type="button"
-                          className="quiz-review-icon-button"
-                          aria-label="Save changes"
-                          disabled={isSaving}
-                          onClick={handleSave}
-                        >
-                          {isSaving
-                            ? <span className="quiz-review-save-spinner" aria-hidden="true" />
-                            : <span className="quiz-review-save-icon" aria-hidden="true" />
+          <div className="qr-sidebar-footer">
+            <button
+              type="button"
+              className="qr-finish-btn"
+              onClick={() => setIsFinishModalOpen(true)}
+            >
+              Finish review
+            </button>
+          </div>
+        </aside>
+
+        {/* ── Main panel ── */}
+        <main className="qr-main">
+          {activeQuestion ? (
+            <div className="qr-card">
+
+              {/* Card top row */}
+              <div className="qr-card-topbar">
+                <div className="qr-card-topleft">
+                  <div className="qr-question-label-row">
+                    <span className="qr-question-label">Question {activeQuestionIndex + 1}</span>
+                    {changedQuestionIds.has(activeQuestion.internal_question_id) && (
+                      <span className="quiz-review-new-changes-badge">New Changes</span>
+                    )}
+                  </div>
+                  <div className="qr-points-row">
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      className="quiz-review-points-input"
+                      value={pointsEdits[activeQuestion.internal_question_id] ?? activeQuestion.points_possible}
+                      onChange={(e) => {
+                        setPointsEdits((prev) => ({ ...prev, [activeQuestion.internal_question_id]: e.target.value }));
+                      }}
+                      onBlur={(e) => {
+                        const id = activeQuestion.internal_question_id;
+                        const raw = parseFloat(e.target.value);
+                        const resolved = isNaN(raw) || raw < 1 ? 1 : raw;
+                        setPointsEdits((prev) => {
+                          const next = { ...prev };
+                          if (resolved === activeQuestion.points_possible) {
+                            delete next[id];
+                          } else {
+                            next[id] = resolved;
                           }
-                        </button>
-                        <button type="button" className="quiz-review-icon-button" aria-label="Add question">
-                          <span className="quiz-review-plus-icon" aria-hidden="true">+</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="quiz-review-icon-button"
-                          aria-label="Delete question"
-                          onClick={() => setIsDeleteModalOpen(true)}
-                        >
-                          <span className="quiz-review-trash-icon" aria-hidden="true"></span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Question stem */}
-                    <h3 className="question-text" style={{ marginTop: '1.15rem', fontWeight: 400, fontSize: 'clamp(1.1rem, 1.7vw, 1.55rem)' }}
-                      dangerouslySetInnerHTML={{ __html: activeQuestion.question_stem_html }}
+                          return next;
+                        });
+                      }}
                     />
+                    <span className="quiz-review-points-label">pts</span>
+                    {saveError && <p className="qr-save-error">{saveError}</p>}
+                  </div>
+                </div>
 
-                    {/* Answer choices */}
-                    <div className="quizStepMaterialsList" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                      {activeQuestion.choices?.map((choice: any) => {
-                        return (
-                          <div
-                            key={choice.internal_choice_id}
-                            className="quizInputText"
-                            style={{
-                              textAlign: 'left',
-                              background: choice.is_correct ? 'rgba(70, 130, 120, 0.15)' : '#ffffff',
-                              color: '#1f2f2c',
-                              border: choice.is_correct ? '1px solid rgba(70, 130, 120, 0.4)' : '1px solid #C0C0C0',
-                              fontFamily: '"Red Hat Display", sans-serif',
-                              fontSize: '1rem',
-                            }}
-                            dangerouslySetInnerHTML={{ __html: choice.text_html }}
-                          />
-                        );
-                      })}
-                    </div>
-                  </>
-                ) : (
-                  <p>No questions available.</p>
-                )}
-
-                {/* Navigation buttons */}
-                <div className="buttons" style={{ marginTop: 'auto' }}>
-                  {activeQuestionIndex > 0 ? (
-                    <button className="button-back" onClick={() => setActiveQuestionIndex((i) => i - 1)}>Back</button>
-                  ) : (
-                    <span />
-                  )}
-                  {activeQuestionIndex < questions.length - 1 ? (
-                    <button className="button-next" onClick={() => setActiveQuestionIndex((i) => i + 1)}>Next</button>
-                  ) : (
-                    <button className="button-next" onClick={() => setIsFinishModalOpen(true)}>Finish</button>
-                  )}
+                <div className="qr-card-topright">
+                  <div className="qr-card-topright-actions">
+                    <button
+                      type="button"
+                      className="qr-save-text-btn"
+                      aria-label="Save changes"
+                      disabled={isSaving}
+                      onClick={handleSave}
+                    >
+                      {isSaving ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      className="qr-trash-btn"
+                      aria-label="Delete question"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                    >
+                      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d93025" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </div>
+                  <span className="qr-question-type">Multiple Choice</span>
                 </div>
               </div>
 
+              {/* Divider */}
+              <div className="qr-card-divider" />
+
+              {/* Question stem */}
+              <textarea
+                className="qr-question-textarea"
+                value={stripHtml(activeQuestion.question_stem_html)}
+                readOnly
+                rows={2}
+              />
+
+              {/* Answer choices */}
+              <div className="qr-choices">
+                {activeQuestion.choices?.map((choice: any) => (
+                  <div key={choice.internal_choice_id} className={`qr-choice-row${choice.is_correct ? ' correct' : ''}`}>
+                    <span className={`qr-radio-circle${choice.is_correct ? ' correct' : ''}`}>
+                      {choice.is_correct && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    <input
+                      type="text"
+                      className={`qr-choice-input${choice.is_correct ? ' correct' : ''}`}
+                      value={stripHtml(choice.text_html)}
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      className="qr-choice-trash-btn"
+                      aria-label="Delete choice"
+                      onClick={() => {}}
+                    >
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d93025" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add question button */}
+              <button type="button" className="qr-add-question-btn" onClick={() => {}}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add question
+              </button>
+
             </div>
+          ) : (
+            <div className="qr-card" style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <p style={{ color: '#666' }}>No questions available.</p>
+            </div>
+          )}
+
+          {/* Navigation — outside card, full width */}
+          <div className="qr-nav">
+            {activeQuestionIndex > 0 ? (
+              <button className="qr-nav-back" onClick={() => setActiveQuestionIndex((i) => i - 1)}>Back</button>
+            ) : (
+              <span />
+            )}
+            {activeQuestionIndex < questions.length - 1 ? (
+              <button className="qr-nav-next" onClick={() => setActiveQuestionIndex((i) => i + 1)}>Next</button>
+            ) : (
+              <button className="qr-nav-next" onClick={() => setIsFinishModalOpen(true)}>Finish</button>
+            )}
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Delete modal */}
@@ -330,7 +379,7 @@ if (loading) return (
                 {activeAction === 'delete' ? 'Deleting...' : 'Delete Quiz'}
               </button>
 
-              {/* published_on_canvas: unpublish (keeps on Canvas as draft) */}
+              {/* published_on_canvas: unpublish */}
               {quizStatus === 'published_on_canvas' && (
                 <button
                   type="button"
@@ -354,7 +403,7 @@ if (loading) return (
                 </button>
               )}
 
-              {/* saved_to_canvas or published_on_canvas: revert to draft (removes from Canvas, keeps in MongoDB) */}
+              {/* saved_to_canvas or published_on_canvas: revert to draft */}
               {(quizStatus === 'saved_to_canvas' || quizStatus === 'published_on_canvas') && (
                 <button
                   type="button"
