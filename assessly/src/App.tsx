@@ -87,6 +87,14 @@ function App() {
       <Routes>
         {/* Login Route */}
         <Route
+          path="/landing"
+          element={
+            <SignedOut>
+              <Landing />
+            </SignedOut>
+          }
+        />
+        <Route
           path="/login"
           element={
             <SignedOut>
