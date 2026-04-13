@@ -7,7 +7,11 @@
 
 // const USE_MOCK = false; // Changed to false to use real backend
 
-const API_BASE = "http://localhost:8000";
+// const API_BASE = "http://localhost:8000";
+const rawApiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+export const API_BASE = rawApiBase.startsWith('http://') || rawApiBase.startsWith('https://')
+  ? rawApiBase.replace(/\/$/, '')
+  : `https://${rawApiBase.replace(/\/$/, '')}`;
 
 // Helper to get Clerk token
 async function getAuthHeaders() {
