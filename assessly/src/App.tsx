@@ -8,6 +8,7 @@ import AddCourses from './pages/addCourses';
 import Tokens from './pages/tokens';
 import QuizStructure from './pages/quizStructure';
 import QuizReview from './pages/quizReview';
+import { API_BASE } from './config/api';
 
 function App() {
   const { getToken, isSignedIn } = useAuth();
@@ -48,7 +49,8 @@ function App() {
 
       try {
         const token = await getToken();
-        const response = await fetch('http://localhost:8000/api/me', {
+        //const response = await fetch('http://localhost:8000/api/me', {
+        const response = await fetch(`${API_BASE}/api/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
