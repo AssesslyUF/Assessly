@@ -47,5 +47,5 @@
 
 Note: Every time you open a new terminal, activate the venv first with `source venv/bin/activate` before running the server.
 
-## Deployement 
+## Deployment 
 https://assessly-steel.vercel.app/
