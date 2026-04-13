@@ -662,6 +662,178 @@
     gap: 0.7rem;
 }
 
+/* Points input */
+/* Quiz review loading screen */
+.quiz-review-loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 2rem;
+    height: calc(100vh - 60px);
+}
+
+.quiz-review-loading-text {
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #171717;
+    margin: 0;
+}
+
+/* Hourglass loader */
+.loader {
+    --c1: #2d5f56;
+    --c2: #83c7bf;
+    width: 40px;
+    height: 80px;
+    border-top: 4px solid var(--c1);
+    border-bottom: 4px solid var(--c1);
+    background: linear-gradient(90deg, var(--c1) 2px, var(--c2) 0 5px, var(--c1) 0) 50%/7px 8px no-repeat;
+    display: grid;
+    overflow: hidden;
+    animation: l5-0 2s infinite linear;
+}
+
+.loader::before,
+.loader::after {
+    content: "";
+    grid-area: 1/1;
+    width: 75%;
+    height: calc(50% - 4px);
+    margin: 0 auto;
+    border: 2px solid var(--c1);
+    border-top: 0;
+    box-sizing: content-box;
+    border-radius: 0 0 40% 40%;
+    -webkit-mask:
+        linear-gradient(#000 0 0) bottom/4px 2px no-repeat,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    background:
+        linear-gradient(var(--d, 0deg), var(--c2) 50%, #0000 0) bottom/100% 205%,
+        linear-gradient(var(--c2) 0 0) center/0 100%;
+    background-repeat: no-repeat;
+    animation: inherit;
+    animation-name: l5-1;
+}
+
+.loader::after {
+    transform-origin: 50% calc(100% + 2px);
+    transform: scaleY(-1);
+    --s: 3px;
+    --d: 180deg;
+}
+
+@keyframes l5-0 {
+    80%  { transform: rotate(0); }
+    100% { transform: rotate(0.5turn); }
+}
+
+@keyframes l5-1 {
+    10%, 70%  { background-size: 100% 205%, var(--s, 0) 100%; }
+    70%, 100% { background-position: top, center; }
+}
+
+.quiz-review-new-changes-badge {
+    display: inline-block;
+    margin-top: 0.25rem;
+    padding: 0.15rem 0.55rem;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: #2d6a5f;
+    border-radius: 999px;
+}
+
+.quiz-review-points-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.quiz-review-points-input {
+    width: 3rem;
+    padding: 0.2rem 0.35rem;
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 0.9rem;
+    color: #1f2f2c;
+    background: #f5f5f5;
+    border: 1.5px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.quiz-review-points-input::-webkit-outer-spin-button,
+.quiz-review-points-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quiz-review-points-input:focus {
+    border-color: #2d6a5f;
+    background: #ffffff;
+}
+
+.quiz-review-points-label {
+    font-family: "Red Hat Display", sans-serif;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Save icon — floppy disk drawn with CSS */
+.quiz-review-save-icon {
+    position: relative;
+    display: block;
+    width: 0.95rem;
+    height: 0.95rem;
+    border: 2.5px solid #ffffff;
+    border-radius: 2px;
+}
+
+.quiz-review-save-icon::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0.15rem;
+    width: 0.45rem;
+    height: 0.28rem;
+    background: #ffffff;
+    border-radius: 0 0 2px 2px;
+}
+
+.quiz-review-save-icon::after {
+    content: "";
+    position: absolute;
+    bottom: 0.1rem;
+    left: 0.12rem;
+    right: 0.12rem;
+    height: 0.38rem;
+    border: 2px solid #ffffff;
+    border-radius: 1px;
+}
+
+/* Save spinner */
+@keyframes quiz-save-spin {
+    to { transform: rotate(360deg); }
+}
+
+.quiz-review-save-spinner {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: quiz-save-spin 0.7s linear infinite;
+}
+
 .quiz-review-plus-icon {
     font-family: "Red Hat Display", sans-serif;
     font-size: 2.1rem;
@@ -902,6 +1074,52 @@
     outline-offset: 2px;
 }
 
+/* Cube stacking loader */
+.cube-loader {
+  width: 90px;
+  height: 14px;
+  box-shadow: 0 3px 0 #2d5f56;
+  position: relative;
+  clip-path: inset(-40px 0 -5px);
+}
+
+.cube-loader::before {
+  content: "";
+  position: absolute;
+  inset: auto calc(50% - 17px) 0;
+  height: 50px;
+  --g: no-repeat linear-gradient(#468278 0 0);
+  background: var(--g), var(--g), var(--g), var(--g);
+  background-size: 16px 14px;
+  animation:
+    l7-1 2s infinite linear,
+    l7-2 2s infinite linear;
+}
+
+@keyframes l7-1 {
+  0%,
+  100%  { background-position: 0 -50px, 100% -50px; }
+  17.5% { background-position: 0 100%, 100% -50px, 0 -50px, 100% -50px; }
+  35%   { background-position: 0 100%, 100% 100%, 0 -50px, 100% -50px; }
+  52.5% { background-position: 0 100%, 100% 100%, 0 calc(100% - 16px), 100% -50px; }
+  70%,
+  98%   { background-position: 0 100%, 100% 100%, 0 calc(100% - 16px), 100% calc(100% - 16px); }
+}
+
+@keyframes l7-2 {
+  0%, 70% { transform: translate(0); }
+  100%    { transform: translate(200%); }
+}
+
+.quiz-generating-label {
+  font-family: "Red Hat Display", sans-serif;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  font-style: italic;
+  color: #0d1518;
+  margin: 0;
+}
+
 .quiz-generating-overlay {
     position: fixed;
     inset: 0;
@@ -916,11 +1134,10 @@
 
 .quiz-generating-stack {
     position: relative;
-    width: min(100%, 620px);
     display: flex;
     flex-direction: column;
-    gap: clamp(2rem, 5vh, 3.5rem);
-    filter: drop-shadow(0 12px 18px rgba(123, 167, 159, 0.48));
+    align-items: center;
+    gap: 2rem;
 }
 
 .quiz-generating-row {

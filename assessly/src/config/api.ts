@@ -106,6 +106,60 @@ saveQuizToCanvas: async (quizId: string) => {
     return response.json();
   },
 
+syncFromCanvas: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/sync-from-canvas`, { method: 'POST', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to sync from Canvas');
+    }
+    return response.json();
+  },
+
+saveQuizEdits: async (quizId: string, questions: { internal_question_id: string; points_possible: number }[]) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/edits`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ questions }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to save quiz edits');
+    }
+    return response.json();
+  },
+
+unpublishQuiz: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/unpublish`, { method: 'POST', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to unpublish quiz');
+    }
+    return response.json();
+  },
+
+revertToDraft: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}/revert-to-draft`, { method: 'POST', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to revert quiz to draft');
+    }
+    return response.json();
+  },
+
+deleteQuiz: async (quizId: string) => {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_BASE}/api/quizzes/${quizId}`, { method: 'DELETE', headers });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to delete quiz');
+    }
+    return response.json();
+  },
+
 generateQuiz: async (files: { url: string; display_name: string; content_type: string }[], course_id?: number, quiz_ids?: number[], question_count?: number, title?: string) => {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_BASE}/api/generate-quiz`, {

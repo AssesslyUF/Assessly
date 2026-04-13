@@ -74,6 +74,7 @@ def publish_quiz_to_canvas(quiz_doc: dict, canvas_token: str, publish: bool = Tr
         item_payload = {
             "item": {
                 "entry_type": "Item",
+                "points_possible": question.get("points_possible", 1),
                 "entry": {
                     "title": f"Question {question['position']}",
                     "points_possible": question.get("points_possible", 1),
@@ -147,6 +148,140 @@ def publish_quiz_to_canvas(quiz_doc: dict, canvas_token: str, publish: bool = Tr
         "assignment_id": assignment_id,
         "questions": updated_questions
     }
+
+
+def publish_existing_canvas_quiz(course_id: int, new_quiz_id: str, canvas_token: str) -> None:
+    """
+    Publishes a quiz that already exists on Canvas (e.g. was previously saved as a draft).
+    Just PATCHes the existing quiz to set published=True — does NOT create a new quiz shell.
+    Raises RuntimeError on failure.
+    """
+    headers = {
+        "Authorization": f"Bearer {canvas_token}",
+        "Content-Type": "application/json"
+    }
+    get_resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers
+    )
+    if not get_resp.ok:
+        raise RuntimeError(f"Failed to fetch existing quiz for publishing: {get_resp.status_code} {get_resp.text}")
+
+    quiz_state = get_resp.json()
+    quiz_state["published"] = True
+    patch_resp = requests.patch(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers,
+        json={"quiz": quiz_state}
+    )
+    if not patch_resp.ok:
+        raise RuntimeError(f"Failed to publish existing quiz: {patch_resp.status_code} {patch_resp.text}")
+
+
+def update_item_points_on_canvas(course_id: int, new_quiz_id: str, canvas_item_id: str, points_possible: float, canvas_token: str) -> None:
+    """
+    Updates the points_possible for a single question item already on Canvas.
+    Fetches the full item first then PATCHes it back with the updated points,
+    since the Canvas New Quizzes API requires the full item body on update.
+    Raises RuntimeError on failure.
+    """
+    headers = {
+        "Authorization": f"Bearer {canvas_token}",
+        "Content-Type": "application/json"
+    }
+    get_resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}/items/{canvas_item_id}",
+        headers=headers
+    )
+    if not get_resp.ok:
+        raise RuntimeError(f"Failed to fetch item {canvas_item_id} for points update: {get_resp.status_code} {get_resp.text}")
+
+    item_data = get_resp.json()
+    # points_possible lives at the item level in the Canvas response
+    item_data["points_possible"] = points_possible
+    if "entry" in item_data:
+        item_data["entry"]["points_possible"] = points_possible
+
+    patch_resp = requests.patch(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}/items/{canvas_item_id}",
+        headers=headers,
+        json={"item": item_data}
+    )
+    if not patch_resp.ok:
+        raise RuntimeError(f"Failed to update points for item {canvas_item_id}: {patch_resp.status_code} {patch_resp.text}")
+
+
+def unpublish_canvas_quiz(course_id: int, new_quiz_id: str, canvas_token: str) -> None:
+    """
+    Unpublishes a quiz on Canvas by PATCHing published=False.
+    The quiz remains on Canvas as an unpublished draft (saved_to_canvas).
+    Raises RuntimeError on failure.
+    """
+    headers = {
+        "Authorization": f"Bearer {canvas_token}",
+        "Content-Type": "application/json"
+    }
+    get_resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers
+    )
+    if not get_resp.ok:
+        raise RuntimeError(f"Failed to fetch quiz for unpublishing: {get_resp.status_code} {get_resp.text}")
+
+    quiz_state = get_resp.json()
+    quiz_state["published"] = False
+    patch_resp = requests.patch(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers,
+        json={"quiz": quiz_state}
+    )
+    if not patch_resp.ok:
+        raise RuntimeError(f"Failed to unpublish quiz: {patch_resp.status_code} {patch_resp.text}")
+
+
+def fetch_canvas_quiz_items(course_id: int, new_quiz_id: str, canvas_token: str) -> list:
+    """
+    Fetches all item (question) data for a New Quiz from Canvas.
+    Returns a list of raw item dicts as returned by Canvas.
+    Raises RuntimeError on failure.
+    """
+    headers = {"Authorization": f"Bearer {canvas_token}"}
+    resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}/items",
+        headers=headers,
+        params={"per_page": 100}
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Failed to fetch quiz items from Canvas: {resp.status_code} {resp.text}")
+    return resp.json()
+
+
+def fetch_canvas_quiz_title(course_id: int, new_quiz_id: str, canvas_token: str) -> str:
+    """
+    Fetches the title of a New Quiz from Canvas.
+    Raises RuntimeError on failure.
+    """
+    headers = {"Authorization": f"Bearer {canvas_token}"}
+    resp = requests.get(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Failed to fetch quiz from Canvas: {resp.status_code} {resp.text}")
+    return resp.json().get("title", "")
+
+
+def delete_quiz_from_canvas(course_id: int, new_quiz_id: str, canvas_token: str) -> None:
+    """
+    Deletes a New Quiz from Canvas. Raises RuntimeError if the request fails.
+    """
+    headers = {"Authorization": f"Bearer {canvas_token}"}
+    resp = requests.delete(
+        f"{CANVAS_BASE_URL}/api/quiz/v1/courses/{course_id}/quizzes/{new_quiz_id}",
+        headers=headers
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Failed to delete quiz from Canvas: {resp.status_code} {resp.text}")
 
 
 def get_all_new_quizzes_for_course(course_id: int, canvas_token: str) -> dict:
