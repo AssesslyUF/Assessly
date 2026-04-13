@@ -23,6 +23,7 @@ function QuizStructure() {
     const [prevQuizzes, setPrevQuizzes] = useState<any[]>([]);
     const [selectedQuizIds, setSelectedQuizIds] = useState<number[]>([]);
     const [quizSearchQuery, setQuizSearchQuery] = useState("");
+    const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(false);
 
     // Quiz generation state
     const [isGenerating, setIsGenerating] = useState(false);
@@ -111,12 +112,15 @@ function QuizStructure() {
             }
         }
         async function loadQuizzes() {
+            setIsLoadingQuizzes(true);
             setQuizSearchQuery("");
             try {
                 const response = await api.getQuizzes(courseId);
                 setPrevQuizzes(response?.quizzes || []);
             } catch (error) {
                 console.error('Failed to load quizzes:', error);
+            } finally {
+                setIsLoadingQuizzes(false);
             }
         }
 
@@ -263,15 +267,25 @@ function QuizStructure() {
                         aria-label="Search previous quizzes"
                     />
 
-                    {prevQuizzes.length === 0 && (
+                    {isLoadingQuizzes && (
+                        <div className="loading-status" role="status" aria-live="polite">
+                            <span className="loading-dots" aria-hidden="true">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </div>
+                    )}
+
+                    {!isLoadingQuizzes && prevQuizzes.length === 0 && (
                         <p>No previous quizzes found for this course to reference</p>
                     )}
 
-                    {prevQuizzes.length > 0 && filteredQuizzes.length === 0 && (
+                    {!isLoadingQuizzes && prevQuizzes.length > 0 && filteredQuizzes.length === 0 && (
                         <p>No matching quizzes found</p>
                     )}
 
-                    {filteredQuizzes.length > 0 && (
+                    {!isLoadingQuizzes && filteredQuizzes.length > 0 && (
                         <div className="quizStepChecklist">
                             {filteredQuizzes.map((quiz) => (
                                 <label key={quiz.id} className="quizFileOption">
