@@ -304,20 +304,6 @@ function QuizStructure() {
                 </div>
             );
         }
-        /*
-            Canvas needs
-
-            Course ID:                             course_id                                                         (int)
-            Quiz title:                            quiz[title]                                                       (string)
-            //Quiz assigment group id:               quiz[assignment_group_id]                                         (int)
-            Quiz points:                           quiz[points_possible]                                             (number)
-            Quiz instructions:                     quiz[instructions]                                                (string)
-            Enable multiple attempts:              quiz[quiz_settings][multiple_attempts][multiple_attempts_enabled] (boolean)
-            Enable quiz time limit:                quiz[quiz_settings][has_time_limit]                               (boolean)
-            Set quiz time limit:                   quiz[quiz_settings][session_time_limit_in_seconds]                (Positive int)
-            Enable display results:                quiz[quiz_settings][result_view_settings][result_view_restricted] (boolean)
-            Enable display items in results view:  quiz[quiz_settings][result_view_settings][display_items]          (boolean)   
-            */
         // Step 3: Quiz Qualities 
         else if (index === 2) {
             return (
@@ -432,14 +418,6 @@ function QuizStructure() {
         }
         // Step 4: AI Prompt 
         else {
-               /*
-            API needs 
-
-            - number of questions
-            - question types: Categorization, Essay, Fill in the Blank, Formula, Hot Spot, Matching, Multiple Choice, 
-            Multiple Answer, Numeric, Ordering, True or False, Stimulus 
-            - enable image generation
-            */
             return (
                 <div className="quizQuestionContainer quizStepPanel quizStepPromptPanel">
                      {/* Quiz questions */}
@@ -477,7 +455,6 @@ function QuizStructure() {
             );
         }
     }
-
     return (
     <div className='page'>
         <div className="top-bar">

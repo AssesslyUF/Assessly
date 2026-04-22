@@ -1317,12 +1317,3 @@
 .dropdown-main.open .dropdown-chevron::before {
     transform: translate(-50%, -38%) rotate(-135deg);
 }
-
-/* @media (max-width: 992px) {
-    .content {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        margin-top: 1.5rem;
-    }
-} */

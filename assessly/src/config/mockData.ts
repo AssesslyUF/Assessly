@@ -1,5 +1,3 @@
-// src/config/mockData.ts
-
 // POST /api/sync-courses
 export const mockSyncCoursesResponse = {
   "courses_synced": 13,

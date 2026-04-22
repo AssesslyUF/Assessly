@@ -145,7 +145,6 @@ describe('Dashboard', () => {
                 <Dashboard />
             </MemoryRouter>
         );
-
         expect(await screen.findByText('Algorithms 101')).toBeTruthy();
         await user.click(screen.getByText('Algorithms 101'));
         expect(await screen.findByRole('heading', { name: 'Algorithms 101' })).toBeTruthy();

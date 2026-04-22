@@ -1,3 +1,4 @@
+//Adding courses
 import loginImg from '../assets/Login/Login_Image.png';
 import '../styles/Login.css';
 import {useState} from 'react';
@@ -15,7 +16,6 @@ function AddCourses() {
     const handleAddToDashboard = () => {
         const selectedCourses = courses.filter(course => course.isChecked);
         console.log("Selected Courses:", selectedCourses);
-        // Add logic to add selected courses to the dashboard
     }
     
     return (

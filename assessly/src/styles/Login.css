@@ -23,15 +23,6 @@
     padding: 3rem 0.5rem;
     isolation: isolate;
 }
-
-/* .image-container::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(133, 246, 199, 0.6) 0%, rgba(112, 232, 199, 0.35) 35%, rgba(255, 255, 255, 0) 100%);
-    z-index: -1;
-} */
-
 .login-img {
     position: relative;
     z-index: 1;

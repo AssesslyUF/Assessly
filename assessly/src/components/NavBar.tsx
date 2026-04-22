@@ -23,15 +23,18 @@ const { user } = useUser();
 
     return (
     <header className="header">
+        {/* Logo */}
         <Link to="/" className="brand" aria-label="Assessly home">
             Assessly
         </Link>
 
+        {/* Message and Avatar */}
         <div className="header-actions">
             <p className="header-welcome">Welcome {user?.firstName || 'User'}!</p>
             <div className="header-avatar" aria-label="User profile initial">
                 {userInitial}
             </div>
+            {/* Sign out button */}
             <SignOutIcon size={30} weight="regular" className="btn-logout" aria-label="logout" onClick={handleLogout}/>
         </div>
     </header>

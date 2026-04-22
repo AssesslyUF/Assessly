@@ -6,15 +6,18 @@ import Character from '../assets/login_character.png';
 function Login() {
   return (
     <div className="login">
-      <div className="login-page">`
+      <div className="login-page">
+        {/* Character image */}
         <div className="image-container">
           <img src={Character} className="login-img" alt="Login Image"/>
         </div>
+        {/* Message */}
         <div className="inputLogin">
           <div className="close-container">
             <h1 className="main-title">WELCOME TO ASSESSLY</h1>
             <p className="sub-title">Generate practice quizzes from course content</p>
           </div>
+          {/* Clerk */}
           <div className="clerk-signin-wrap">
             <SignIn routing="virtual" />
           </div>
