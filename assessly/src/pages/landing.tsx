@@ -38,11 +38,13 @@ function Landing() {
 	return (
     <main className="landing-shell">
         <div className="landing-frame">
+            {/* NavBar */}
             <header className="landing-nav soft-panel">
+                {/* Logo */}
                 <Link to="/" className="brand" aria-label="Assessly home">
                     Assessly
                 </Link>
-
+                {/* Buttons */}
                 <div className="nav-actions">
                     <Link to="/login" className="nav-link">
                         Sign In
@@ -53,7 +55,8 @@ function Landing() {
                     </Link>
                 </div>
             </header>
-
+            
+            {/* Hero Section */}
             <section className="hero">
                 <div className="hero-copy">
                     <div className="eyebrow">
@@ -78,7 +81,7 @@ function Landing() {
                         </a>
                     </div>
                 </div>
-
+                {/* Hero Section Images */}
                 <div className="hero-visual" aria-hidden="true">
                     <div className="hero-glow" />
                     <img className="hero-star" src={starImage} alt="star" />
@@ -86,6 +89,7 @@ function Landing() {
                 </div>
             </section>
 
+            {/* Pipeline section to scroll to */}
             <section className="pipeline" id="pipeline">
                 <p className="pipeline-heading">The pipeline</p>
                 <div className="pipeline-grid">

@@ -1,10 +1,11 @@
+//Component for dashboard course 
 type DashboardCardTone = 'published' | 'saved' | 'pending' | 'neutral';
 
+//Variables to collect
 interface DashboardCardProps {
   title: string;
-  
-  imageSrc: string; //no
-  imageAlt?: string; //no
+  imageSrc: string; 
+  imageAlt?: string; 
   count?: number;
   singularLabel?: string;
   pluralLabel?: string;

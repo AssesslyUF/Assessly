@@ -1,13 +1,3 @@
-// import {
-//   mockSyncCoursesResponse,
-//   mockQuizzesResponse,
-//   mockFilesResponse,
-//   mockQuestionsResponse,
-// } from "../config/mockData";
-
-// const USE_MOCK = false; // Changed to false to use real backend
-
-// const API_BASE = "http://localhost:8000";
 const rawApiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 export const API_BASE = rawApiBase.startsWith('http://') || rawApiBase.startsWith('https://')
   ? rawApiBase.replace(/\/$/, '')

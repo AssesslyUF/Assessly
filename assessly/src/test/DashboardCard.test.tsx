@@ -6,21 +6,21 @@ describe('DashboardCard', () => {
     it('renders title, question cont, and quiz points', () => {
         const { getByRole, getByText } = render(
         <DashboardCard
-            title="Week 1 Quiz"
+            title="Course 10"
             imageSrc="/test-image.png"
             count={2}
             singularLabel="question"
             pluralLabel="questions"
             pointsPossible={10}
-            statusText="Saved"
-            statusTone="saved"
+            // statusText="Saved"
+            // statusTone="saved"
         />
         );
-        expect(getByRole('heading', { name: 'Week 1 Quiz' })).toBeTruthy();
+        expect(getByRole('heading', { name: 'Course 10' })).toBeTruthy();
         expect(getByText('2 questions • 10 points')).toBeTruthy();
         expect(getByText('Saved')).toBeTruthy();
     });
-    //Test 2: clicking on the dashboard is responsive 
+    //Test 2: clicking on the dashboard card is responsive 
     it('calls onClick when clicked with a mouse', () => {
         const onClick = jest.fn();
         const { getByRole } = render(

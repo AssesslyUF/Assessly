@@ -36,7 +36,6 @@ describe('QuizStructure page', () => {
 				{ id: 12, title: 'Binary Search Practice' },
 			],
 		});
-
 		mockGetFiles.mockResolvedValue({
 			files: [
 				{
@@ -53,32 +52,27 @@ describe('QuizStructure page', () => {
 				},
 			],
 		});
-
 		mockGetAssignmentGroups.mockResolvedValue({
 			assignment_groups: [
 				{ id: 91, name: 'Quizzes' },
 				{ id: 92, name: 'Exams' },
 			],
 		});
-
 		mockGenerateQuiz.mockResolvedValue({ quiz_id: 'quiz-created-123' });
 	});
-
+	//Test 1: clicking on side navigation 
 	it('lets user click question numbers to navigate steps', async () => {
 		render(<QuizStructure />);
 
 		expect(await screen.findByRole('heading', { name: 'Which course quizzes would you like the quiz to be based on?' })).toBeTruthy();
-
 		await userEvent.click(screen.getByRole('button', { name: 'Go to question 3' }));
 		expect(screen.getByRole('heading', { name: 'Canvas Quiz Structure' })).toBeTruthy();
-
 		await userEvent.click(screen.getByRole('button', { name: 'Go to question 4' }));
 		expect(screen.getByRole('heading', { name: 'AI Prompting' })).toBeTruthy();
-
 		await userEvent.click(screen.getByRole('button', { name: 'Go to question 1' }));
 		expect(screen.getByRole('heading', { name: 'Which course quizzes would you like the quiz to be based on?' })).toBeTruthy();
 	});
-
+	//Test 2: filtering by search bar for previous quizzes 
 	it('filters quizzes and materials through search inputs', async () => {
 		const user = userEvent.setup();
 		render(<QuizStructure />);
@@ -104,7 +98,7 @@ describe('QuizStructure page', () => {
 		expect(screen.queryByText('Lecture 1 Notes.pdf')).toBeNull();
 		expect(screen.getByText('Binary Trees Slides.pptx')).toBeTruthy();
 	});
-
+	//Test 3: tracking quiz inputs for quiz review page 
 	it('submits selected responses and navigates to quiz review', async () => {
 		const user = userEvent.setup();
 		const alertSpy = jest.spyOn(window, 'alert').mockImplementation(() => {});

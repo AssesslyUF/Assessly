@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom'; //needed to render link compone
 import Landing from '../pages/landing';
 
 describe('Landing links', () => {
+    //Test 1: check main heading and subtext render 
 	it('renders login heading and subtitle', () => {
         render(
             <MemoryRouter>
@@ -12,6 +13,7 @@ describe('Landing links', () => {
         expect(screen.getByRole('heading', { name: /Your course materials, turned into quizzes\./i })).toBeTruthy();
 		expect(screen.getByText(/Automate the repetitive work so you can focus on teaching, feedback, and better learning outcomes./i)).toBeTruthy();
 	});
+    //Test 2: checking assessly logo 
     it('routes brand link to home', () => {
         render(
             <MemoryRouter>
@@ -20,6 +22,7 @@ describe('Landing links', () => {
         );
         expect(screen.getByRole('link', { name: /Assessly home/i })).toHaveAttribute('href', '/');
     });
+    //Test 3: checking 'sign in' button 
     it('routes Sign In link to login', () => {
         render(
             <MemoryRouter>
@@ -28,6 +31,7 @@ describe('Landing links', () => {
         );
         expect(screen.getByRole('link', { name: /Sign In/i })).toHaveAttribute('href', '/login');
     });
+    //Test 4: checking 'Get Started' button 
     it('routes Get Started link to login', () => {
         render(
             <MemoryRouter>
@@ -36,6 +40,7 @@ describe('Landing links', () => {
         );
         expect(screen.getByRole('link', { name: /Get Started/i })).toHaveAttribute('href', '/login');
     });
+    //Test 5: checking 'Start Creating' button 
     it('routes Start Creating link to login', () => {
         render(
             <MemoryRouter>
@@ -44,6 +49,7 @@ describe('Landing links', () => {
         );
         expect(screen.getByRole('link', { name: /Start Creating/i })).toHaveAttribute('href', '/login');
     });
+    //Test 6: checking 'Learn More' button
     it('routes Learn More link to pipeline section', () => {
         render(
             <MemoryRouter>
@@ -52,6 +58,7 @@ describe('Landing links', () => {
         );
         expect(screen.getByRole('link', { name: /Scroll down to learn more/i })).toHaveAttribute('href', '#pipeline');
     });
+    //Test 7: check to see if hero section images were rendered 
     it('renders the login illustration', () => {
 		render(
              <MemoryRouter>

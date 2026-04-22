@@ -50,7 +50,6 @@ function App() {
 
       try {
         const token = await getToken();
-        //const response = await fetch('http://localhost:8000/api/me', {
         const response = await fetch(`${API_BASE}/api/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });

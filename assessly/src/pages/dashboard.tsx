@@ -93,6 +93,7 @@ function Dashboard() {
       <NavBar />
     <div className="dashboard">
       <main className="main">
+        {/* when a course is selected */}
         {selectedCourse ? (
           <section className="section">
             <div className="quiz-header">
@@ -199,7 +200,9 @@ function Dashboard() {
               )}
             </div>
           </section>
-        ) : (
+        ) : 
+        (
+          // when a course is not selected yet
           <section className="section">
             {/* Cached quizzes section */}
             <h2 className="section-heading">Continue working</h2>

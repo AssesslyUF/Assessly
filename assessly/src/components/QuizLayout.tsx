@@ -1,12 +1,15 @@
+//Quiz card component 
 import DraftIcon from '../assets/SpinnerGap.svg';
 import PublishedIcon from '../assets/RocketLaunch.svg';
 
+//States for the quiz status 
 type QuizLayoutTone = 'Published' | 'Saved' | 'Review' | 'Editing' | 'neutral';
 
+//Variables to collect
 interface QuizLayoutProps {
     icon: string
     title: string;
-    imageAlt?: string; //no
+    imageAlt?: string; 
     count?: number;
     singularLabel?: string;
     pluralLabel?: string;
@@ -52,6 +55,7 @@ function QuizLayout({
             : undefined
         }
     > 
+        {/* Quiz title and metrics*/}
         <div className="quiz-icon-title">
             <img src={quizIcon} alt={imageAlt || title} className="icon" />
             <div className="quiz-content">
@@ -60,6 +64,7 @@ function QuizLayout({
             </div>
         </div>
         
+        {/* Quiz Status */}
         <div className="quiz-content">
             {statusText && (
             <span className={`card-badge card-badge-${statusTone}`}>
@@ -71,5 +76,4 @@ function QuizLayout({
       </div>
   );
 }
-
 export default QuizLayout;

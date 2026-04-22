@@ -6,6 +6,7 @@ jest.mock('../assets/SpinnerGap.svg', () => 'draft-icon.svg');
 jest.mock('../assets/RocketLaunch.svg', () => 'published-icon.svg');
 
 describe('QuizLayout', () => {
+	//Test 1: renders accurate quiz information
 	it('renders passed input props (title, count, status, and date)', () => {
 		render(
 			<QuizLayout
@@ -22,7 +23,7 @@ describe('QuizLayout', () => {
 		expect(screen.getByText('Draft')).toBeTruthy();
 		expect(screen.getByText('Apr 21, 2026')).toBeTruthy();
 	});
-
+	//Test 2: accurate badge status color (css)
 	it('applies correct badge color class from statusTone', () => {
 		const { rerender } = render(
 			<QuizLayout
@@ -44,7 +45,7 @@ describe('QuizLayout', () => {
 		);
 		expect(screen.getByText('Needs Review')).toHaveClass('card-badge', 'card-badge-Review');
 	});
-
+	//Test 3: clicking on the quiz card is responsive 
 	it('calls onClick', async () => {
 		const user = userEvent.setup();
 		const handleClick = jest.fn();
