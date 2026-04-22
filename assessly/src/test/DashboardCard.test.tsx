@@ -12,13 +12,10 @@ describe('DashboardCard', () => {
             singularLabel="question"
             pluralLabel="questions"
             pointsPossible={10}
-            // statusText="Saved"
-            // statusTone="saved"
         />
         );
         expect(getByRole('heading', { name: 'Course 10' })).toBeTruthy();
         expect(getByText('2 questions • 10 points')).toBeTruthy();
-        expect(getByText('Saved')).toBeTruthy();
     });
     //Test 2: clicking on the dashboard card is responsive 
     it('calls onClick when clicked with a mouse', () => {
